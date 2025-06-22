@@ -1,50 +1,155 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="uk">
+<head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AR-сцена з A-Frame та AR.js</title>
+    
+    <!-- A-Frame 1.7.1 -->
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.2/aframe/build/aframe-ar.min.js"></script>
+    
+    <!-- AR.js -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <!-- MSDF текстовий компонент -->
+    <script src="https://unpkg.com/aframe-msdf-text-component@^3.0.0/dist/aframe-msdf-text-component.min.js"></script>
+    
     <style>
-      body, html { margin: 0; padding: 0; overflow: hidden; }
-      #ar-container { width: 100vw; height: 100vh; }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
     </style>
-  </head>
-
-  <body>
-    <a-scene
-      embedded
-      arjs="sourceType: webcam; debugUIEnabled: false;"
-      renderer="logarithmicDepthBuffer: true;"
-      vr-mode-ui="enabled: false"
-      id="ar-container"
-    >
-
-      <!-- Камера -->
-      <a-camera position="0 0 0" look-controls-enabled="false"></a-camera>
-
-      <!-- Маркер JUP -->
-      <a-marker type="pattern" url="../patterns/pattern-jup.patt">
-        <a-entity
-          gltf-model="../models/jup.glb"
-          scale="0.5 0.5 0.5"
-          position="0 0 0"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
-        ></a-entity>
-      </a-marker>
-
-      <!-- Маркер YORK -->
-      <a-marker type="pattern" url="../patterns/pattern-york.patt">
-        <a-entity
-          gltf-model="../models/cup.glb"
-          scale="0.4 0.4 0.4"
-          position="0 0 0"
-          animation__scale="property: scale; dir: alternate; dur: 2000; loop: true; to: 0.5 0.5 0.5"
-        ></a-entity>
-      </a-marker>
-
-      <!-- Обов’язково додати для AR -->
-      <a-entity camera></a-entity>
+</head>
+<body>
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true;">
+        
+        <!-- Активи -->
+        <a-assets>
+            <!-- Текстури -->
+            <img id="ice-texture" src="../textures/ice.jpg">
+            <img id="metal-texture" src="../textures/metal.jpg">
+            <img id="cloth-texture" src="../textures/cloth.jpg">
+        </a-assets>
+        
+        <!-- Перший маркер - власний pattern-jup -->
+        <a-marker type="pattern" url="../patterns/pattern-jup.patt">
+            <!-- Контейнер для групування об'єктів -->
+            <a-entity id="jupiter-container" rotation="-90 0 0" scale="0.3 0.3 0.3" position="0 0 0">
+                
+                <!-- 3D модель Юпітера -->
+                <a-entity 
+                    gltf-model="../models/jup.glb"
+                    position="0 0 0"
+                    scale="2 2 2"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
+                </a-entity>
+                
+                <!-- Орбітальні кільця навколо моделі -->
+                <a-torus 
+                    position="0 0 0" 
+                    color="#FFD700" 
+                    radius="3" 
+                    radius-tubular="0.1"
+                    rotation="90 0 0"
+                    opacity="0.6"
+                    animation="property: rotation; to: 90 360 0; loop: true; dur: 12000">
+                </a-torus>
+                
+                <!-- Текст з анімацією -->
+                <a-text 
+                    value="Jupiter" 
+                    font="../fonts/volja-regular_w-msdf.json" 
+                    negate="false" 
+                    color="#00ffff" 
+                    width="8" 
+                    position="0 3 0"
+                    align="center"
+                    animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; dur: 2000; loop: true">
+                </a-text>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Другий маркер - власний pattern-york -->
+        <a-marker type="pattern" url="../patterns/pattern-york.patt">
+            <!-- Контейнер для групування об'єктів -->
+            <a-entity id="cup-container" rotation="-90 0 0" scale="0.5 0.5 0.5" position="0 0 0">
+                
+                <!-- 3D модель чашки -->
+                <a-entity 
+                    gltf-model="../models/cup.glb"
+                    position="0 0 0"
+                    scale="1 1 1"
+                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 6000">
+                </a-entity>
+                
+                <!-- Декоративні примітиви навколо чашки -->
+                <!-- Крижана сфера -->
+                <a-sphere 
+                    position="2 0 0"
+                    radius="0.5"
+                    src="#ice-texture"
+                    animation="property: position; to: 2 2 0; dir: alternate; dur: 3000; loop: true; easing: easeInOutQuad">
+                </a-sphere>
+                
+                <!-- Металевий куб -->
+                <a-box 
+                    position="-2 0 0"
+                    width="0.8" height="0.8" depth="0.8"
+                    src="#metal-texture"
+                    animation="property: rotation; to: 360 360 0; loop: true; dur: 5000">
+                </a-box>
+                
+                <!-- Тканинний циліндр -->
+                <a-cylinder 
+                    position="0 0 -2"
+                    height="1" radius="0.4"
+                    src="#cloth-texture"
+                    animation="property: material.color; to: #ff00ff; dir: alternate; dur: 4000; loop: true">
+                </a-cylinder>
+                
+                <!-- Підпис -->
+                <a-text 
+                    value="York Cup" 
+                    font="../fonts/volja-regular_w-msdf.json" 
+                    negate="false" 
+                    color="#ffff00" 
+                    width="6" 
+                    position="0 2 0"
+                    align="center"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+                </a-text>
+                
+                <!-- Частинки навколо чашки -->
+                <a-entity id="particles">
+                    <a-sphere 
+                        position="1.5 1 0" 
+                        radius="0.1" 
+                        color="#ff0000"
+                        animation="property: position; to: 1.5 -1 0; dir: alternate; dur: 2000; loop: true">
+                    </a-sphere>
+                    <a-sphere 
+                        position="-1.5 -1 0" 
+                        radius="0.1" 
+                        color="#00ff00"
+                        animation="property: position; to: -1.5 1 0; dir: alternate; dur: 2000; loop: true">
+                    </a-sphere>
+                    <a-sphere 
+                        position="0 1 1.5" 
+                        radius="0.1" 
+                        color="#0000ff"
+                        animation="property: position; to: 0 -1 1.5; dir: alternate; dur: 2000; loop: true">
+                    </a-sphere>
+                </a-entity>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Камера -->
+        <a-entity camera></a-entity>
     </a-scene>
-  </body>
+</body>
 </html>
