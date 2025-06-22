@@ -39,11 +39,13 @@
     <a-scene
       embedded
       arjs="sourceType: webcam; 
+            sourceWidth: 1920; 
+            sourceHeight: 1080;
             debugUIEnabled: false; 
             trackingMethod: best;
             detectionMode: mono_and_matrix; 
             matrixCodeType: 3x3;"
-      renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; precision: high;"
+      renderer="antialias: true; alpha: true; precision: medium;"
       vr-mode-ui="enabled: false"
     >
       <!-- Перший маркер - pattern-jup -->
