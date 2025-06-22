@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ініціалізація сцени за допомогою MindAR
     const mindarThree = new MindARThree.MindARThree({
         container: document.querySelector("#container"),
-        imageTargetSrc: "./targets.mind", // Шлях до вашого маркера
+        imageTargetSrc: "../markers/rolling.mind", // Шлях до вашого маркера
     });
 
     // Отримуємо рендерер, сцену і камеру від MindAR
