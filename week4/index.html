@@ -1,124 +1,139 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Лабораторні роботи</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1a0000;
-      color: #f2f2f2;
-      overflow-x: hidden;
-    }
-
-    header {
-      background-color: #330000;
-      padding: 20px;
-      text-align: center;
-      color: #ffcccc;
-      font-size: 2em;
-      border-bottom: 2px solid #990000;
-      box-shadow: 0 0 15px #660000;
-    }
-
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 20px;
-    }
-
-    section {
-      background-color: #260000;
-      border: 2px solid #990000;
-      border-radius: 16px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(153, 0, 0, 0.5);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    section:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-    }
-
-    h2 {
-      color: #ff6666;
-      text-align: center;
-      border-bottom: 1px solid #990000;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      display: inline-block;
-      width: 100%;
-      padding: 10px 15px;
-      background-color: #330000;
-      color: #ff9999;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-    }
-
-    a:hover {
-      transform: scale(1.07);
-      color: #ffffff;
-      background-color: #660000;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Сонячна система в AR</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
-  <header>
-    Лабораторні роботи
-  </header>
 
-  <main>
-    <section>
-      <h2>Тижні</h2>
-      <ul>
-        <li><a href="week1/index.html">Week 1</a></li>
-        <li><a href="week2/index.html">Week 2</a></li>
-        <li><a href="week3/index.html">Week 3</a></li>
-        <li><a href="week4/index.html">Week 4</a></li>
-        <li><a href="week5/index.html">Week 5</a></li>
-        <li><a href="week6/index.html">Week 6</a></li>
-        <li><a href="week7/index.html">Week 7</a></li>
-        <li><a href="week8/index.html">Week 8</a></li>
-        <li><a href="week9/index.html">Week 9</a></li>
-        <li><a href="week10/index.html">Week 10</a></li>
-        <li><a href="week11/index.html">Week 11</a></li>
-        <li><a href="week12/index.html">Week 12</a></li>
-        <li><a href="week13/index.html">Week 13</a></li>
-        <li><a href="week14/index.html">Week 14</a></li>
-      </ul>
-    </section>
+<body style="margin: 0px; overflow: hidden;">
+    <a-scene
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true; antialias: true; colorManagement: true;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        events="marker-handler"
+    >
+        <a-assets timeout="30000">
+            <img id="sunTexture" src="../textures/sun.jpg">
+            <img id="mercuryTexture" src="../textures/mercury.jpg">
+            <img id="venusTexture" src="../textures/venus.jpg">
+            <img id="earthTexture" src="../textures/earth.jpg">
+            <img id="marsTexture" src="../textures/mars.jpg">
+            <img id="saturnTexture" src="../textures/saturn.jpg">
+            <img id="uranusTexture" src="../textures/uranus.jpg">
+            <img id="neptuneTexture" src="../textures/neptune.jpg">
+            <a-asset-item id="jupiterModel" src="../models/jup.glb"></a-asset-item>
+        </a-assets>
 
-    <section>
-      <h2>Лабораторні</h2>
-      <ul>
-        <li><a href="lab1/index.html">Лабораторна 1</a></li>
-        <li><a href="lab2/index.html">Лабораторна 2</a></li>
-        <li><a href="lab3/index.html">Лабораторна 3</a></li>
-      </ul>
-    </section>
-  </main>
+        <a-marker id="marker-jup" type="pattern" url="../patterns/pattern-jup.patt">
+            <a-entity id="content-jup" visible="false">
+                <a-entity position="0 0.5 0" light="type: point; intensity: 1.5; distance: 10;">
+                    <a-sphere
+                        src="#sunTexture"
+                        radius="0.4"
+                        animation="property: rotation; to: 0 360 0; loop: true; dur: 25000; easing: linear;"
+                    ></a-sphere>
+                    <a-text value="Сонце" align="center" color="#FFF" position="0 0.6 0" look-at="[camera]" scale="0.3 0.3 0.3" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800; easing: linear;">
+                    <a-entity position="0.7 0.5 0">
+                        <a-sphere src="#mercuryTexture" radius="0.08"></a-sphere>
+                        <a-text value="Меркурій" align="center" color="#FFF" position="0 0.2 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500; easing: linear;">
+                    <a-entity position="1.1 0.5 0">
+                        <a-sphere src="#venusTexture" radius="0.12"></a-sphere>
+                        <a-text value="Венера" align="center" color="#FFF" position="0 0.25 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500; easing: linear;">
+                     <a-entity position="1.5 0.5 0">
+                        <a-sphere src="#earthTexture" radius="0.13"></a-sphere>
+                        <a-text value="Земля" align="center" color="#FFF" position="0 0.25 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+        </a-marker>
+
+        <a-marker id="marker-york" type="pattern" url="../patterns/pattern-york.patt">
+            <a-entity id="content-york" visible="false">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 18000; easing: linear;">
+                    <a-entity position="0.8 0.5 0">
+                        <a-sphere src="#marsTexture" radius="0.1"></a-sphere>
+                        <a-text value="Марс" align="center" color="#FFF" position="0 0.2 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+                
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000; easing: linear;">
+                    <a-entity position="1.5 0.5 0">
+                        <a-gltf-model src="#jupiterModel" scale="0.3 0.3 0.3"></a-gltf-model>
+                        <a-text value="Юпітер" align="center" color="#FFF" position="0 0.4 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear;">
+                    <a-entity position="2.2 0.5 0">
+                        <a-sphere src="#saturnTexture" radius="0.25"></a-sphere>
+                        <a-ring color="#8A7D60" radius-inner="0.3" radius-outer="0.5" rotation="90 0 0"></a-ring>
+                        <a-text value="Сатурн" align="center" color="#FFF" position="0 0.5 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000; easing: linear;">
+                    <a-entity position="2.8 0.5 0">
+                        <a-sphere src="#uranusTexture" radius="0.2"></a-sphere>
+                        <a-text value="Уран" align="center" color="#FFF" position="0 0.3 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000; easing: linear;">
+                    <a-entity position="3.3 0.5 0">
+                        <a-sphere src="#neptuneTexture" radius="0.19"></a-sphere>
+                        <a-text value="Нептун" align="center" color="#FFF" position="0 0.3 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+        <a-light type="ambient" color="#BBB"></a-light>
+        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
+    </a-scene>
+
+    <script>
+        // This component handles the logic for showing and hiding marker content
+        AFRAME.registerComponent('marker-handler', {
+            init: function() {
+                const markerJup = document.querySelector('#marker-jup');
+                const markerYork = document.querySelector('#marker-york');
+                const contentJup = document.querySelector('#content-jup');
+                const contentYork = document.querySelector('#content-york');
+
+                markerJup.addEventListener('markerFound', () => {
+                    contentJup.setAttribute('visible', true);
+                    console.log('Marker Jup Found');
+                });
+                markerJup.addEventListener('markerLost', () => {
+                    contentJup.setAttribute('visible', false);
+                    console.log('Marker Jup Lost');
+                });
+
+                markerYork.addEventListener('markerFound', () => {
+                    contentYork.setAttribute('visible', true);
+                    console.log('Marker York Found');
+                });
+                markerYork.addEventListener('markerLost', () => {
+                    contentYork.setAttribute('visible', false);
+                    console.log('Marker York Lost');
+                });
+            }
+        });
+    </script>
 </body>
 </html>
