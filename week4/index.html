@@ -3,31 +3,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR-сцена з трьома маркерами - Завдання 4 тиждень</title>
+    <title>Лабораторна 4 - AR маркери</title>
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <script src="https://unpkg.com/aframe-msdf-text-component@^3.0.0/dist/aframe-msdf-text-component.min.js"></script>
     <style>
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
         }
         
-        .arjs-loader div {
-            text-align: center;
-            font-size: 1.25em;
-            color: white;
-        }
-        
-        #info {
+        .info {
             position: absolute;
             top: 10px;
             left: 10px;
@@ -36,28 +22,32 @@
             padding: 10px;
             border-radius: 5px;
             z-index: 1000;
-            font-family: Arial, sans-serif;
+        }
+        
+        .info h3 {
+            margin: 0 0 10px 0;
+        }
+        
+        .info p {
+            margin: 5px 0;
+            font-size: 14px;
         }
     </style>
 </head>
-<body style="margin: 0; overflow: hidden;">
-    <div class="arjs-loader">
-        <div>Завантаження AR, зачекайте...</div>
+<body>
+    <div class="info">
+        <h3>Лабораторна 4 - AR маркери</h3>
+        <p>• Hiro - об'єкти з лаб 3</p>
+        <p>• Jup - модель Юпітера</p>
+        <p>• York - модель чашки</p>
     </div>
     
-    <div id="info">
-        <h3>AR-сцена з трьома маркерами</h3>
-        <p>• Hiro - анімована сонячна система</p>
-        <p>• Kanji - інтерактивний куб</p>
-        <p>• Custom - модель чашки</p>
-    </div>
-    
-    <a-scene
-        embedded
+    <a-scene 
+        embedded 
         arjs="sourceType: webcam; 
-              debugUIEnabled: false; 
+              debugUIEnabled: false;
               trackingMethod: best;
-              detectionMode: mono_and_matrix; 
+              detectionMode: mono_and_matrix;
               matrixCodeType: 3x3;
               maxDetectionRate: 60;"
         renderer="logarithmicDepthBuffer: true; 
@@ -66,220 +56,190 @@
                  precision: high;
                  colorManagement: true;
                  physicallyCorrectLights: true;"
-        vr-mode-ui="enabled: false"
-    >
-        <!-- Перший маркер - HIRO -->
-        <a-marker preset="hiro" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-            <a-entity
-                id="solarSystemMini"
-                rotation="-90 0 0"
-                scale="0.3 0.3 0.3"
-                position="0 0 0"
-            >
-                <!-- Міні сонячна система -->
-                <!-- Сонце -->
-                <a-sphere 
-                    position="0 0 0" 
+        vr-mode-ui="enabled: false">
+        
+        <!-- Освітлення -->
+        <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
+        <a-light type="directional" position="0 10 0" color="#ffffff" intensity="0.5"></a-light>
+        
+        <!-- 📌 Маркер HIRO - об'єкти з лабораторної 3 -->
+        <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+            <a-entity rotation="-90 0 0" scale="0.5 0.5 0.5">
+                <!-- Анімований зелений тор -->
+                <a-torus 
+                    position="0 0.5 0" 
+                    color="green" 
+                    radius="0.5"
+                    radius-tubular="0.1"
+                    animation="property: components.material.material.color; type: color; from: green; to: red; loop: true; dur: 10000"
+                    animation__rotation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+                </a-torus>
+                
+                <!-- Анімований торус-кнот -->
+                <a-torus-knot 
+                    color="orange" 
                     radius="0.5" 
-                    src="../textures/sun.jpg"
-                    emissive="#ffaa00"
-                    emissive-intensity="0.5"
-                ></a-sphere>
+                    position="1 0.5 0"
+                    p="2" q="3"
+                    animation="property: rotation; to: 0 0 360; loop: true; dur: 10000"
+                    animation__scale="property: scale; to: 1.2 1.2 1.2; dir: alternate; dur: 3000; loop: true">
+                </a-torus-knot>
                 
-                <!-- Земля -->
-                <a-entity
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
-                >
-                    <a-sphere 
-                        position="2 0 0" 
-                        radius="0.2" 
-                        src="../textures/earth.jpg"
-                        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
-                    ></a-sphere>
-                </a-entity>
+                <!-- Текстурована площина -->
+                <a-plane 
+                    src="https://raw.githubusercontent.com/aframevr/sample-assets/master/assets/images/uvgrid/UV_Grid_Sm.jpg"
+                    width="2.5" 
+                    height="1.5" 
+                    position="0 1 -1" 
+                    rotation="-90 0 0"
+                    opacity="0.9">
+                </a-plane>
                 
-                <!-- Марс -->
-                <a-entity
-                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 15000"
-                >
-                    <a-sphere 
-                        position="3 0 0" 
-                        radius="0.15" 
-                        src="../textures/mars.jpg"
-                        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
-                    ></a-sphere>
-                </a-entity>
-                
-                <!-- Юпітер -->
-                <a-entity
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 25000"
-                >
-                    <a-sphere 
-                        position="4.5 0 0" 
-                        radius="0.4" 
-                        src="../textures/jupiter.jpg"
-                        animation="property: rotation; to: 0 360 0; loop: true; dur: 2000"
-                    ></a-sphere>
-                </a-entity>
+                <!-- Два циліндра -->
+                <a-cylinder 
+                    color="yellow" 
+                    height="2" 
+                    radius="0.05" 
+                    position="-1 0 0"
+                    animation="property: material.emissiveIntensity; from: 0; to: 0.5; dir: alternate; dur: 2000; loop: true">
+                </a-cylinder>
+                <a-cylinder 
+                    color="blue" 
+                    height="2" 
+                    radius="0.05" 
+                    position="1 0 0"
+                    animation="property: height; from: 2; to: 3; dir: alternate; dur: 3000; loop: true">
+                </a-cylinder>
                 
                 <!-- Текст -->
                 <a-text 
-                    value="Сонячна система" 
-                    font="../fonts/volja-regular_w-msdf.json" 
-                    negate="false" 
-                    color="#ffffff" 
+                    value="Lab 3 Objects" 
+                    negate="false"
+                    color="white" 
                     width="6" 
-                    position="0 2 0"
+                    position="0 2.5 0" 
                     align="center"
-                ></a-text>
+                    animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 2000; loop: true">
+                </a-text>
+                
+                <!-- Додаткові декоративні елементи -->
+                <a-entity rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000">
+                    <a-sphere position="2 0.5 0" radius="0.1" color="#ff00ff"></a-sphere>
+                    <a-sphere position="-2 0.5 0" radius="0.1" color="#00ffff"></a-sphere>
+                    <a-sphere position="0 0.5 2" radius="0.1" color="#ffff00"></a-sphere>
+                    <a-sphere position="0 0.5 -2" radius="0.1" color="#ff0000"></a-sphere>
+                </a-entity>
             </a-entity>
         </a-marker>
         
-        <!-- Другий маркер - KANJI -->
-        <a-marker preset="kanji" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-            <a-entity
-                id="interactiveCube"
-                rotation="-90 0 0"
-                scale="0.5 0.5 0.5"
-                position="0 0 0"
-            >
-                <!-- Інтерактивний куб з анімаціями -->
-                <a-box
-                    position="0 0.5 0"
-                    width="1" height="1" depth="1"
-                    src="../textures/metal.jpg"
-                    animation="property: rotation; to: 360 360 0; loop: true; dur: 5000"
-                    animation__color="property: material.color; from: #ffffff; to: #ff00ff; dir: alternate; dur: 3000; loop: true"
-                    animation__scale="property: scale; to: 1.5 1.5 1.5; dir: alternate; dur: 2000; loop: true"
-                >
-                </a-box>
-                
-                <!-- Обертаючі частинки навколо куба -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
-                    <a-sphere position="1.5 0.5 0" radius="0.1" color="#ff0000"></a-sphere>
-                    <a-sphere position="-1.5 0.5 0" radius="0.1" color="#00ff00"></a-sphere>
-                    <a-sphere position="0 0.5 1.5" radius="0.1" color="#0000ff"></a-sphere>
-                    <a-sphere position="0 0.5 -1.5" radius="0.1" color="#ffff00"></a-sphere>
+        <!-- 📌 Маркер JUP - модель Юпітера -->
+        <a-marker type="pattern" url="../patterns/pattern-jup.patt" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+            <a-entity rotation="-90 0 0" scale="0.5 0.5 0.5">
+                <!-- Модель Юпітера -->
+                <a-entity 
+                    gltf-model="../models/jup.glb"
+                    position="0 0 0"
+                    scale="2 2 2"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
                 </a-entity>
                 
-                <!-- Кільця навколо куба -->
+                <!-- Кільця навколо Юпітера -->
                 <a-torus
-                    position="0 0.5 0"
-                    radius="2"
+                    position="0 0 0"
+                    radius="3"
                     radius-tubular="0.05"
-                    rotation="0 0 0"
-                    color="#00ffff"
-                    opacity="0.7"
-                    animation="property: rotation; to: 360 0 0; loop: true; dur: 6000"
-                ></a-torus>
+                    rotation="70 0 0"
+                    color="#ccaa88"
+                    opacity="0.6"
+                    animation="property: rotation; to: 70 360 0; loop: true; dur: 20000">
+                </a-torus>
                 
-                <a-torus
-                    position="0 0.5 0"
-                    radius="2"
-                    radius-tubular="0.05"
-                    rotation="90 0 0"
-                    color="#ff00ff"
-                    opacity="0.7"
-                    animation="property: rotation; to: 90 360 0; loop: true; dur: 6000"
-                ></a-torus>
+                <!-- Супутники -->
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
+                    <a-sphere position="2.5 0 0" radius="0.2" color="#ddccaa"></a-sphere>
+                </a-entity>
+                <a-entity animation="property: rotation; to: 0 -360 0; loop: true; dur: 8000">
+                    <a-sphere position="3.5 0 0" radius="0.15" color="#eeddbb"></a-sphere>
+                </a-entity>
                 
                 <!-- Текст -->
                 <a-text 
-                    value="Інтерактивний куб" 
-                    font="../fonts/volja-regular_w-msdf.json" 
-                    negate="false" 
-                    color="#00ffff" 
-                    width="5" 
-                    position="0 2 0"
-                    align="center"
-                ></a-text>
+                    value="Jupiter" 
+                    color="#ffffff" 
+                    width="8" 
+                    position="0 3 0"
+                    align="center">
+                </a-text>
             </a-entity>
         </a-marker>
         
-        <!-- Третій маркер - ВЛАСНИЙ (використовуємо pattern-york) -->
-        <a-marker type="pattern" url="../patterns/pattern-york.patt" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-            <a-entity
-                id="cupModel"
-                rotation="-90 0 0"
-                scale="0.5 0.5 0.5"
-                position="0 0 0"
-            >
+        <!-- 📌 Маркер YORK - модель чашки -->
+        <a-marker type="pattern" url="../patterns/pattern-york.patt" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
+            <a-entity rotation="-90 0 0" scale="0.7 0.7 0.7">
                 <!-- Модель чашки -->
                 <a-entity 
                     gltf-model="../models/cup.glb"
                     position="0 0 0"
                     scale="1 1 1"
-                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 8000"
-                ></a-entity>
+                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 15000">
+                </a-entity>
                 
-                <!-- Анімований пар з чашки -->
+                <!-- Анімований пар -->
                 <a-entity id="steam">
                     <a-cylinder
                         position="0 1 0"
                         radius="0.3"
                         height="0.5"
                         color="#ffffff"
-                        opacity="0.3"
-                        animation="property: position; to: 0 2 0; dur: 3000; loop: true"
-                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 3000; loop: true"
-                        animation__scale="property: scale; to: 1.5 1 1.5; dur: 3000; loop: true"
-                    ></a-cylinder>
+                        opacity="0.2"
+                        animation="property: position; to: 0 2.5 0; dur: 4000; loop: true"
+                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 4000; loop: true"
+                        animation__scale="property: scale; to: 1.5 1 1.5; dur: 4000; loop: true">
+                    </a-cylinder>
                     
                     <a-cylinder
                         position="0.2 1.2 0"
                         radius="0.2"
                         height="0.4"
                         color="#ffffff"
-                        opacity="0.3"
-                        animation="property: position; to: 0.2 2.2 0; dur: 3500; loop: true"
-                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 3500; loop: true"
-                        animation__scale="property: scale; to: 1.3 1 1.3; dur: 3500; loop: true"
-                    ></a-cylinder>
+                        opacity="0.2"
+                        animation="property: position; to: 0.3 2.7 0.1; dur: 4500; loop: true"
+                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 4500; loop: true">
+                    </a-cylinder>
+                    
+                    <a-cylinder
+                        position="-0.1 0.9 0.1"
+                        radius="0.25"
+                        height="0.3"
+                        color="#ffffff"
+                        opacity="0.2"
+                        animation="property: position; to: -0.2 2.3 0.2; dur: 3500; loop: true"
+                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 3500; loop: true">
+                    </a-cylinder>
                 </a-entity>
                 
-                <!-- Декоративні елементи -->
-                <a-torus-knot
-                    position="0 -0.5 0"
-                    radius="0.8"
-                    radius-tubular="0.1"
-                    p="2"
-                    q="3"
-                    color="#d4a574"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
-                ></a-torus-knot>
+                <!-- Блюдце -->
+                <a-cylinder
+                    position="0 -0.3 0"
+                    radius="1.2"
+                    height="0.1"
+                    color="#e8e8e8">
+                </a-cylinder>
                 
                 <!-- Текст -->
                 <a-text 
-                    value="Гаряча кава" 
-                    font="../fonts/volja-regular_w-msdf.json" 
-                    negate="false" 
-                    color="#d4a574" 
-                    width="5" 
+                    value="Hot Coffee" 
+                    color="#8b4513" 
+                    width="6" 
                     position="0 2 0"
                     align="center"
-                    animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; dur: 2000; loop: true"
-                ></a-text>
+                    animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 3000; loop: true">
+                </a-text>
             </a-entity>
         </a-marker>
         
         <!-- Камера -->
         <a-entity camera></a-entity>
     </a-scene>
-    
-    <script>
-        // Приховати завантажувач коли сцена готова
-        document.addEventListener("DOMContentLoaded", function() {
-            const scene = document.querySelector('a-scene');
-            const loader = document.querySelector('.arjs-loader');
-            
-            if (scene.hasLoaded) {
-                loader.style.display = 'none';
-            } else {
-                scene.addEventListener('loaded', function() {
-                    loader.style.display = 'none';
-                });
-            }
-        });
-    </script>
 </body>
 </html>
