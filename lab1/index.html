@@ -1,81 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>A-Frame Rolling Cylinder AR</title>
-  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <title>A-Frame Rolling Cylinder AR [Виправлено]</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.0/aframe/build/aframe-ar.js"></script>
+  <script src="https://unpkg.com/aframe-line-component@1.2.1/dist/aframe-line-component.min.js"></script>
 </head>
-<body style="margin : 0px; overflow: hidden;">
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+
+<body style="margin: 0px; overflow: hidden;">
+  <a-scene
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="logarithmicDepthBuffer: true;">
 
     <a-assets>
-      <img id="hardwood" src="../textures/hardwood.jpg">
-      <img id="disturb" src="../textures/disturb.jpg">
-      <a-asset-item id="font-json" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
-      <a-asset-item id="font-png" src="../fonts/volja-regular_w-msdf.png"></a-asset-item>
-    </a-assets>
+      <img id="hardwood" src="https://cdn.jsdelivr.net/gh/aframevr/aframe/examples/boilerplate/pano/texture-wood.jpg">
+      <img id="disturb" src="https://cdn.jsdelivr.net/gh/aframevr/aframe/examples/boilerplate/pano/floor.jpg">
+      
+      </a-assets>
 
     <a-marker type="pattern" url="../patterns/rollingstones.patt">
 
       <a-plane
-        position="0 -0.5 0"
-        rotation="-70 0 0"
-        width="4"
-        height="2"
-        material="src: #disturb; repeat: 2 1;">
+        position="0 0 0"
+        rotation="-75 0 0"
+        width="2"
+        height="3"
+        material="src: #disturb; repeat: 2 2;">
       </a-plane>
 
-      <a-entity id="rolling-cylinder">
-        <a-cylinder
-          id="cylinder"
-          position="0 0.8 -0.8"
-          rotation="0 0 -20"
-          radius="0.25"
-          height="0.5"
-          material="src: #hardwood">
+      <a-entity id="rolling-assembly">
           <a-animation
             attribute="position"
-            dur="4000"
-            from="0 0.8 -0.8"
-            to="0 -0.2 0.8"
+            dur="5000"
+            from="0 0.2 -1.2"
+            to="0 0.2 1.2"
             repeat="indefinite"
-            easing="linear">
+            easing="ease-in-out-sine">
           </a-animation>
-          <a-animation
-            attribute="rotation"
-            dur="4000"
-            from="0 0 -20"
-            to="360 0 -20"
-            repeat="indefinite"
-            easing="linear">
-          </a-animation>
-        </a-cylinder>
-
-        <a-entity
-          line="start: 0 0.8 -0.8; end: 0 0.2 -0.8; color: red"
-          text="font: ../fonts/volja-regular_w-msdf.json; value: mg; color: red; align: center; width: 2; transparent: true; negate: false;"
-          position="-0.15 0.4 -0.8"
-          rotation="0 0 0">
-        </a-entity>
-
-
-        <a-entity
-          line="start: 0 0.8 -0.8; end: 0.2 1.1 -0.8; color: blue"
-           text="font: ../fonts/volja-regular_w-msdf.json; value: N; color: blue; align: center; width: 2; transparent: true; negate: false;"
-          position="0.25 1.0 -0.8"
-          rotation="0 0 70">
+      
+        <a-entity id="cylinder" position="0 0.15 0" rotation="90 0 0">
+          <a-cylinder
+            radius="0.15"
+            height="0.4"
+            material="src: #hardwood">
+            <a-animation
+              attribute="rotation"
+              dur="2000"
+              from="90 0 0"
+              to="90 360 0"
+              repeat="indefinite"
+              easing="linear">
+            </a-animation>
+          </a-cylinder>
         </a-entity>
 
         <a-entity
-          line="start: 0 0.8 -0.8; end: -0.4 0.6 -0.8; color: green"
-          text="font: ../fonts/volja-regular_w-msdf.json; value: F; color: green; align: center; width: 2; transparent: true; negate: false;"
-          position="-0.3 0.8 -0.8"
-          rotation="0 0 -20">
+          line="start: 0 0.15 0; end: 0 -0.5 0; color: red;"
+          text="value: mg; color: red; align: center; width: 2.5; side: double; zOffset: 0.1;"
+          position="0.15 -0.2 0">
         </a-entity>
+
+        <a-entity
+          line="start: 0 0.15 0; end: 0.2 0.7 0; color: blue;"
+          rotation="0 0 15"
+          text="value: N; color: blue; align: left; width: 2.5; side: double; zOffset: 0.1;"
+          position="0.1 0.5 0">
+        </a-entity>
+
+        <a-entity
+          line="start: 0 0.15 0; end: 0.4 0.05 0; color: green;"
+          rotation="0 0 -75"
+          text="value: F; color: green; align: left; width: 2.5; side: double; zOffset: 0.1;"
+          position="0.25 0.1 0">
+        </a-entity>
+
       </a-entity>
 
-      <a-entity light="type: ambient; color: #BBB"></a-entity>
-      <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-0.5 1 1"></a-entity>
+      <a-light type="ambient" color="#888"></a-light>
+      <a-light type="directional" intensity="0.8" position="-1 1 0.5"></a-light>
 
     </a-marker>
 
