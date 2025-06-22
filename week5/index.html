@@ -1,124 +1,296 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Лабораторні роботи</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1a0000;
-      color: #f2f2f2;
-      overflow-x: hidden;
-    }
-
-    header {
-      background-color: #330000;
-      padding: 20px;
-      text-align: center;
-      color: #ffcccc;
-      font-size: 2em;
-      border-bottom: 2px solid #990000;
-      box-shadow: 0 0 15px #660000;
-    }
-
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 20px;
-    }
-
-    section {
-      background-color: #260000;
-      border: 2px solid #990000;
-      border-radius: 16px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(153, 0, 0, 0.5);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    section:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-    }
-
-    h2 {
-      color: #ff6666;
-      text-align: center;
-      border-bottom: 1px solid #990000;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      display: inline-block;
-      width: 100%;
-      padding: 10px 15px;
-      background-color: #330000;
-      color: #ff9999;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-    }
-
-    a:hover {
-      transform: scale(1.07);
-      color: #ffffff;
-      background-color: #660000;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-    }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фізична модель Сонячної системи - Лабораторна 5</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    Лабораторні роботи
-  </header>
+    <div id="info">
+        <h3>Фізична модель Сонячної системи</h3>
+        <p>Симуляція з реальною гравітаційною взаємодією</p>
+        <p id="timeInfo">Час симуляції: 0 днів</p>
+    </div>
+    
+    <div id="controls">
+        <button onclick="togglePause()">Пауза/Старт</button>
+        <button onclick="addMassiveObject()">Додати масивний об'єкт</button>
+        <button onclick="resetSimulation()">Скинути симуляцію</button>
+        <label>
+            Маса об'єкта: 10^<input type="number" id="massExponent" value="25" min="20" max="30" style="width: 40px;">
+        </label>
+    </div>
 
-  <main>
-    <section>
-      <h2>Тижні</h2>
-      <ul>
-        <li><a href="week1/index.html">Week 1</a></li>
-        <li><a href="week2/index.html">Week 2</a></li>
-        <li><a href="week3/index.html">Week 3</a></li>
-        <li><a href="week4/index.html">Week 4</a></li>
-        <li><a href="week5/index.html">Week 5</a></li>
-        <li><a href="week6/index.html">Week 6</a></li>
-        <li><a href="week7/index.html">Week 7</a></li>
-        <li><a href="week8/index.html">Week 8</a></li>
-        <li><a href="week9/index.html">Week 9</a></li>
-        <li><a href="week10/index.html">Week 10</a></li>
-        <li><a href="week11/index.html">Week 11</a></li>
-        <li><a href="week12/index.html">Week 12</a></li>
-        <li><a href="week13/index.html">Week 13</a></li>
-        <li><a href="week14/index.html">Week 14</a></li>
-      </ul>
-    </section>
+    <a-scene 
+        embedded
+        arjs="sourceType: webcam; 
+              debugUIEnabled: false; 
+              trackingMethod: best;
+              detectionMode: mono_and_matrix; 
+              matrixCodeType: 3x3;
+              maxDetectionRate: 60;
+              canvasWidth: 1280;
+              canvasHeight: 960;"
+        renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; precision: high;"
+        vr-mode-ui="enabled: false">
+        
+        <!-- Освітлення -->
+        <a-light type="ambient" color="#ffffff" intensity="0.3"></a-light>
+        <a-light type="point" position="0 0 0" color="#ffffff" intensity="2"></a-light>
+        
+        <!-- AR маркер -->
+        <a-marker preset="hiro" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+            <a-entity id="solarSystem" scale="0.01 0.01 0.01" rotation="-90 0 0">
+                
+                <!-- Сонце -->
+                <a-sphere id="sun" position="0 0 0" radius="20" src="../textures/sun.jpg" emissive="#ffaa00" emissive-intensity="0.5">
+                    <a-entity planet="name: Sun; mass: 1.989e30; year: 0; dist: 0"></a-entity>
+                </a-sphere>
+                
+                <!-- Меркурій -->
+                <a-sphere position="0 0 0" radius="2.44" src="../textures/mercury.jpg">
+                    <a-entity planet="name: Mercury; mass: 3.301e23; year: 87.97; dist: 57.9e9"></a-entity>
+                </a-sphere>
+                
+                <!-- Венера -->
+                <a-sphere position="0 0 0" radius="6.05" src="../textures/venus.jpg">
+                    <a-entity planet="name: Venus; mass: 4.867e24; year: 224.7; dist: 108.2e9"></a-entity>
+                </a-sphere>
+                
+                <!-- Земля -->
+                <a-sphere position="0 0 0" radius="6.371" src="../textures/earth.jpg">
+                    <a-entity planet="name: Earth; mass: 5.972e24; year: 365.25; dist: 149.6e9"></a-entity>
+                    <!-- Місяць -->
+                    <a-sphere position="10 0 0" radius="1.737" src="../textures/moon.jpg"></a-sphere>
+                </a-sphere>
+                
+                <!-- Марс -->
+                <a-sphere position="0 0 0" radius="3.39" src="../textures/mars.jpg">
+                    <a-entity planet="name: Mars; mass: 6.417e23; year: 687; dist: 227.9e9"></a-entity>
+                </a-sphere>
+                
+                <!-- Юпітер -->
+                <a-sphere position="0 0 0" radius="15" src="../textures/jupiter.jpg">
+                    <a-entity planet="name: Jupiter; mass: 1.899e27; year: 4333; dist: 778.5e9"></a-entity>
+                </a-sphere>
+                
+                <!-- Сатурн -->
+                <a-entity position="0 0 0">
+                    <a-sphere radius="10" src="../textures/saturn.jpg">
+                        <a-entity planet="name: Saturn; mass: 5.685e26; year: 10759; dist: 1434e9"></a-entity>
+                    </a-sphere>
+                    <!-- Кільця Сатурна -->
+                    <a-torus position="0 0 0" rotation="90 0 0" radius="15" radius-tubular="0.1" segments-radial="64" segments-tubular="64" color="#c8b882" opacity="0.8"></a-torus>
+                    <a-torus position="0 0 0" rotation="90 0 0" radius="18" radius-tubular="0.1" segments-radial="64" segments-tubular="64" color="#a89968" opacity="0.6"></a-torus>
+                </a-entity>
+                
+                <!-- Траєкторії орбіт -->
+                <a-entity id="orbits"></a-entity>
+                
+            </a-entity>
+        </a-marker>
+        
+        <a-entity camera></a-entity>
+    </a-scene>
 
-    <section>
-      <h2>Лабораторні</h2>
-      <ul>
-        <li><a href="lab1/index.html">Лабораторна 1</a></li>
-        <li><a href="lab2/index.html">Лабораторна 2</a></li>
-        <li><a href="lab3/index.html">Лабораторна 3</a></li>
-      </ul>
-    </section>
-  </main>
+    <script>
+        // Константи
+        const G = 6.67430e-11; // Гравітаційна стала
+        const SUN_MASS = 1.989e30; // Маса Сонця
+        const AU = 149.6e9; // Астрономічна одиниця в метрах
+        
+        // Масив планет для симуляції
+        let planets = [];
+        let isPaused = false;
+        let simulationTime = 0;
+        let massiveObject = null;
+        
+        // Реєстрація компонента planet
+        AFRAME.registerComponent('planet', {
+            schema: {
+                name: {type: 'string'},
+                mass: {type: 'number'},
+                year: {type: 'number'},
+                dist: {type: 'number'}
+            },
+            
+            init: function() {
+                // Встановлення початкових координат
+                this.el.setAttribute('position', {
+                    x: this.data.dist / 1000000000,
+                    y: 0,
+                    z: 0
+                });
+                
+                // Розрахунок орбітальної швидкості
+                let orbitalVelocity = 0;
+                if (this.data.dist > 0) {
+                    orbitalVelocity = Math.sqrt(G * SUN_MASS / this.data.dist);
+                }
+                
+                // Початкова швидкість (перпендикулярно радіусу)
+                this.v = [0, 0, orbitalVelocity];
+                
+                // Додавання до масиву планет
+                planets.push({
+                    el: this.el,
+                    name: this.data.name,
+                    mass: this.data.mass,
+                    year: this.data.year,
+                    dist: this.data.dist,
+                    pos: [this.data.dist, 0, 0],
+                    v: this.v,
+                    a: [0, 0, 0],
+                    trail: []
+                });
+                
+                // Створення траєкторії орбіти
+                if (this.data.name !== 'Sun') {
+                    this.createOrbitPath();
+                }
+            },
+            
+            createOrbitPath: function() {
+                const orbits = document.getElementById('orbits');
+                const orbit = document.createElement('a-ring');
+                orbit.setAttribute('radius-inner', (this.data.dist / 1000000000) - 0.5);
+                orbit.setAttribute('radius-outer', (this.data.dist / 1000000000) + 0.5);
+                orbit.setAttribute('rotation', '90 0 0');
+                orbit.setAttribute('opacity', '0.3');
+                orbit.setAttribute('color', '#ffffff');
+                orbits.appendChild(orbit);
+            },
+            
+            tick: function(time, timeDelta) {
+                if (isPaused) return;
+                
+                // Крок інтегрування (1/3 земного дня)
+                const dt = 86400 / 3;
+                simulationTime += dt;
+                
+                // Оновлення інформації про час
+                document.getElementById('timeInfo').textContent = 
+                    `Час симуляції: ${Math.floor(simulationTime / 86400)} днів (${(simulationTime / 86400 / 365.25).toFixed(2)} років)`;
+            }
+        });
+        
+        // Функція розрахунку гравітаційних сил
+        function calculateGravity() {
+            if (isPaused) return;
+            
+            const dt = 86400 / 3; // 1/3 дня
+            
+            // Розрахунок прискорення для всіх планет
+            for (let i = 0; i < planets.length; i++) {
+                planets[i].a = [0, 0, 0];
+                
+                for (let j = 0; j < planets.length; j++) {
+                    if (i !== j) {
+                        // Вектор відстані між планетами
+                        let r = [
+                            planets[j].pos[0] - planets[i].pos[0],
+                            planets[j].pos[1] - planets[i].pos[1],
+                            planets[j].pos[2] - planets[i].pos[2]
+                        ];
+                        
+                        // Модуль відстані
+                        let dist = Math.sqrt(r[0]*r[0] + r[1]*r[1] + r[2]*r[2]);
+                        
+                        // Уникнення ділення на нуль
+                        if (dist < 1e6) dist = 1e6;
+                        
+                        // Розрахунок прискорення за законом Ньютона
+                        for (let k = 0; k < 3; k++) {
+                            planets[i].a[k] += G * planets[j].mass * r[k] / Math.pow(dist, 3);
+                        }
+                    }
+                }
+            }
+            
+            // Оновлення швидкості та координат
+            for (let i = 0; i < planets.length; i++) {
+                for (let k = 0; k < 3; k++) {
+                    planets[i].v[k] += planets[i].a[k] * dt;
+                    planets[i].pos[k] += planets[i].v[k] * dt;
+                }
+                
+                // Оновлення позиції 3D-об'єкта
+                planets[i].el.setAttribute('position', {
+                    x: planets[i].pos[0] / 1000000000,
+                    y: planets[i].pos[1] / 1000000000,
+                    z: planets[i].pos[2] / 1000000000
+                });
+            }
+        }
+        
+        // Запуск симуляції
+        setInterval(calculateGravity, 50);
+        
+        // Функції управління
+        function togglePause() {
+            isPaused = !isPaused;
+        }
+        
+        function addMassiveObject() {
+            if (massiveObject) {
+                massiveObject.parentNode.removeChild(massiveObject);
+                planets = planets.filter(p => p.name !== 'MassiveObject');
+            }
+            
+            const exponent = document.getElementById('massExponent').value;
+            const mass = Math.pow(10, exponent);
+            
+            const solarSystem = document.getElementById('solarSystem');
+            massiveObject = document.createElement('a-sphere');
+            massiveObject.setAttribute('position', '300 0 0');
+            massiveObject.setAttribute('radius', '10');
+            massiveObject.setAttribute('color', '#ff0000');
+            massiveObject.setAttribute('opacity', '0.8');
+            massiveObject.innerHTML = `<a-entity planet="name: MassiveObject; mass: ${mass}; year: 0; dist: 300e9"></a-entity>`;
+            
+            solarSystem.appendChild(massiveObject);
+        }
+        
+        function resetSimulation() {
+            location.reload();
+        }
+    </script>
 </body>
 </html>
