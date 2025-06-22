@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>A-Frame Rolling Cylinder AR [Виправлено]</title>
+  <title>A-Frame Rolling Cylinder AR </title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.0/aframe/build/aframe-ar.js"></script>
   <script src="https://unpkg.com/aframe-line-component@1.2.1/dist/aframe-line-component.min.js"></script>
@@ -14,10 +14,10 @@
     renderer="logarithmicDepthBuffer: true;">
 
     <a-assets>
-      <img id="hardwood" src="https://cdn.jsdelivr.net/gh/aframevr/aframe/examples/boilerplate/pano/texture-wood.jpg">
-      <img id="disturb" src="https://cdn.jsdelivr.net/gh/aframevr/aframe/examples/boilerplate/pano/floor.jpg">
-      
-      </a-assets>
+      <img id="hardwood" src="../textures/hardwood.jpg">
+      <img id="disturb" src="../textures/disturb.jpg">
+      <a-asset-item id="font-json" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
+    </a-assets>
 
     <a-marker type="pattern" url="../patterns/rollingstones.patt">
 
@@ -57,29 +57,27 @@
 
         <a-entity
           line="start: 0 0.15 0; end: 0 -0.5 0; color: red;"
-          text="value: mg; color: red; align: center; width: 2.5; side: double; zOffset: 0.1;"
+          text="font: #font-json; negate: false; value: mg; color: red; align: center; width: 2.5; side: double; zOffset: 0.1;"
           position="0.15 -0.2 0">
         </a-entity>
 
         <a-entity
           line="start: 0 0.15 0; end: 0.2 0.7 0; color: blue;"
           rotation="0 0 15"
-          text="value: N; color: blue; align: left; width: 2.5; side: double; zOffset: 0.1;"
+          text="font: #font-json; negate: false; value: N; color: blue; align: left; width: 2.5; side: double; zOffset: 0.1;"
           position="0.1 0.5 0">
         </a-entity>
 
         <a-entity
           line="start: 0 0.15 0; end: 0.4 0.05 0; color: green;"
           rotation="0 0 -75"
-          text="value: F; color: green; align: left; width: 2.5; side: double; zOffset: 0.1;"
+          text="font: #font-json; negate: false; value: F; color: green; align: left; width: 2.5; side: double; zOffset: 0.1;"
           position="0.25 0.1 0">
         </a-entity>
-
       </a-entity>
 
       <a-light type="ambient" color="#888"></a-light>
       <a-light type="directional" intensity="0.8" position="-1 1 0.5"></a-light>
-
     </a-marker>
 
     <a-entity camera></a-entity>
