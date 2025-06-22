@@ -2,188 +2,319 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>AR Rolling Cylinder with CANNON Physics</title>
-  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.3/dist/aframe-physics-system.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Rolling Cylinder with Three.js</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #container { position: absolute; width: 100%; height: 100%; }
+    #ui { position: absolute; bottom: 20px; left: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px; }
+    .vector-label { position: absolute; font-family: Arial; font-size: 12px; color: white; }
+  </style>
 </head>
 <body>
-  <a-scene mindar-image="imageTargetSrc: ../patterns/rolling.mind;" physics="debug: true" renderer="colorManagement: true;">
+  <div id="container"></div>
+  <div id="ui">
+    <div>Waiting for marker detection...</div>
+    <div id="position-info"></div>
+    <div id="velocity-info"></div>
+  </div>
 
-    <!-- AR Camera -->
-    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+  <script>
+    // Main variables
+    let scene, renderer, camera, physicsWorld;
+    let cylinderBody, cylinderMesh;
+    let arScene, mindarThree;
+    let isTracking = false;
     
-    <!-- AR Content -->
-    <a-entity id="ar-content" position="0 0 0" scale="0.08 0.08 0.08" visible="false">
-      <!-- Підлога -->
-      <a-plane static-body 
-               position="0 0 0" 
-               rotation="-90 0 0" 
-               width="20" 
-               height="20" 
-               color="#7BC8A4">
-      </a-plane>
-      <!-- Похилена площина -->
-      <a-plane static-body 
-               position="0 5 0" 
-               rotation="-45 0 0" 
-               width="10" 
-               height="80" 
-               color="#7BC224">
-      </a-plane>
-      <!-- Динамічний циліндр -->
-      <a-cylinder 
-        id="rollingCylinder"
-        position="0 35 -10"
-        radius="0.5"
-        height="2"
-        color="red"
-        rotation="0 0 90"
-        dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
-      </a-cylinder>
-
-      <!-- Вектори сил -->
-      <a-entity id="gravityVector" line="start: 0 0 0; end: 0 -2 0; color: blue" visible="false"></a-entity>
-      <a-cone id="gravityArrow" position="0 -2 0" radius-bottom="0.1" radius-top="0" height="0.3" color="blue" visible="false"></a-cone>
-      <a-text id="gravityLabel" value="Gravity" position="0 -2.5 0" align="center" color="blue" scale="0.5 0.5 0.5" visible="false"></a-text>
+    // Physics parameters
+    const fixedTimeStep = 1.0 / 60.0;
+    const maxSubSteps = 3;
+    
+    // Vector visualization
+    let gravityVector, normalVector, frictionVector, impulseVector;
+    let gravityArrow, normalArrow, frictionArrow, impulseArrow;
+    let gravityLabel, normalLabel, frictionLabel, impulseLabel;
+    
+    // Initialize the application
+    async function init() {
+      // Set up Three.js scene
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
       
-      <a-entity id="normalVector" line="start: 0 0 0; end: 0 0 0; color: green" visible="false"></a-entity>
-      <a-cone id="normalArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="green" visible="false"></a-cone>
-      <a-text id="normalLabel" value="Normal" position="0 0 0" align="center" color="green" scale="0.5 0.5 0.5" visible="false"></a-text>
+      // Set up renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.getElementById('container').appendChild(renderer.domElement);
       
-      <a-entity id="frictionVector" line="start: 0 0 0; end: 0 0 0; color: yellow" visible="false"></a-entity>
-      <a-cone id="frictionArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="yellow" visible="false"></a-cone>
-      <a-text id="frictionLabel" value="Friction" position="0 0 0" align="center" color="yellow" scale="0.5 0.5 0.5" visible="false"></a-text>
+      // Set up physics world
+      setupPhysics();
       
-      <a-entity id="impulseVector" line="start: 0 0 0; end: 0 0 0; color: red" visible="false"></a-entity>
-      <a-cone id="impulseArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="red" visible="false"></a-cone>
-      <a-text id="impulseLabel" value="Impulse" position="0 0 0" align="center" color="red" scale="0.5 0.5 0.5" visible="false"></a-text>
-    </a-entity>
-
-    <script>
-      // Додаємо імпульс після завантаження тіла
-      AFRAME.registerComponent('apply-impulse-on-start', {
-        init: function () {
-          this.el.addEventListener('body-loaded', () => {
-            const el = this.el;
-            const impulse = new CANNON.Vec3(0, 0, 5); // Напрямок штовхання
-            const worldPoint = new CANNON.Vec3().copy(el.object3D.position); // Місце застосування
-            el.body.applyImpulse(impulse, worldPoint);
-          });
-        }
-      });
-
-      // Компонент для відображення векторів сил
-      AFRAME.registerComponent('force-vectors', {
-        init: function () {
-          this.cylinder = document.querySelector('#rollingCylinder');
-          this.gravityVector = document.querySelector('#gravityVector');
-          this.gravityArrow = document.querySelector('#gravityArrow');
-          this.gravityLabel = document.querySelector('#gravityLabel');
-          this.normalVector = document.querySelector('#normalVector');
-          this.normalArrow = document.querySelector('#normalArrow');
-          this.normalLabel = document.querySelector('#normalLabel');
-          this.frictionVector = document.querySelector('#frictionVector');
-          this.frictionArrow = document.querySelector('#frictionArrow');
-          this.frictionLabel = document.querySelector('#frictionLabel');
-          this.impulseVector = document.querySelector('#impulseVector');
-          this.impulseArrow = document.querySelector('#impulseArrow');
-          this.impulseLabel = document.querySelector('#impulseLabel');
-          
-          this.cylinder.addEventListener('body-loaded', () => {
-            this.gravityVector.setAttribute('visible', true);
-            this.gravityArrow.setAttribute('visible', true);
-            this.gravityLabel.setAttribute('visible', true);
-            this.normalVector.setAttribute('visible', true);
-            this.normalArrow.setAttribute('visible', true);
-            this.normalLabel.setAttribute('visible', true);
-            this.frictionVector.setAttribute('visible', true);
-            this.frictionArrow.setAttribute('visible', true);
-            this.frictionLabel.setAttribute('visible', true);
-            this.impulseVector.setAttribute('visible', true);
-            this.impulseArrow.setAttribute('visible', true);
-            this.impulseLabel.setAttribute('visible', true);
-          });
-        },
-        
-        tick: function () {
-          if (!this.cylinder.body) return;
-          
-          const pos = this.cylinder.getAttribute('position');
-          const body = this.cylinder.body;
-          const mass = body.mass;
-          const g = 9.82;
-          
-          // Гравітація
-          const gravityEnd = {x: pos.x, y: pos.y - mass * g * 0.1, z: pos.z};
-          this.gravityVector.setAttribute('line', {
-            start: `${pos.x} ${pos.y} ${pos.z}`,
-            end: `${gravityEnd.x} ${gravityEnd.y} ${gravityEnd.z}`
-          });
-          this.gravityArrow.setAttribute('position', gravityEnd);
-          this.gravityLabel.setAttribute('position', `${gravityEnd.x} ${gravityEnd.y - 0.5} ${gravityEnd.z}`);
-          
-          // Нормальна сила
-          if (pos.y <= 0.5) {
-            const normalEnd = {x: pos.x, y: pos.y + mass * g * 0.1, z: pos.z};
-            this.normalVector.setAttribute('line', {
-              start: `${pos.x} ${pos.y} ${pos.z}`,
-              end: `${normalEnd.x} ${normalEnd.y} ${normalEnd.z}`
-            });
-            this.normalArrow.setAttribute('position', normalEnd);
-            this.normalArrow.setAttribute('rotation', '180 0 0');
-            this.normalLabel.setAttribute('position', `${normalEnd.x} ${normalEnd.y + 0.5} ${normalEnd.z}`);
-          }
-          
-          // Сила тертя
-          const velocity = body.velocity;
-          if (velocity.length() > 0.1) {
-            const frictionDirX = -velocity.x * 0.5 / velocity.length();
-            const frictionDirY = -velocity.y * 0.5 / velocity.length();
-            const frictionDirZ = -velocity.z * 0.5 / velocity.length();
-            const frictionEnd = {x: pos.x + frictionDirX, y: pos.y + frictionDirY, z: pos.z + frictionDirZ};
-            this.frictionVector.setAttribute('line', {
-              start: `${pos.x} ${pos.y} ${pos.z}`,
-              end: `${frictionEnd.x} ${frictionEnd.y} ${frictionEnd.z}`
-            });
-            this.frictionArrow.setAttribute('position', frictionEnd);
-            const angle = Math.atan2(frictionDirX, -frictionDirZ) * 180 / Math.PI;
-            this.frictionArrow.setAttribute('rotation', `0 ${angle} 90`);
-            this.frictionLabel.setAttribute('position', `${frictionEnd.x} ${frictionEnd.y + 0.5} ${frictionEnd.z}`);
-          }
-          
-          // Імпульс
-          if (body.velocity.z > 0.1) {
-            const impulseEnd = {x: pos.x, y: pos.y, z: pos.z + 1};
-            this.impulseVector.setAttribute('line', {
-              start: `${pos.x} ${pos.y} ${pos.z}`,
-              end: `${impulseEnd.x} ${impulseEnd.y} ${impulseEnd.z}`
-            });
-            this.impulseArrow.setAttribute('position', impulseEnd);
-            this.impulseArrow.setAttribute('rotation', '90 0 0');
-            this.impulseLabel.setAttribute('position', `${impulseEnd.x} ${impulseEnd.y + 0.5} ${impulseEnd.z}`);
-          }
-        }
-      });
-
-      // Додаємо компонент до циліндра
-      document.addEventListener('DOMContentLoaded', function () {
-        document.querySelector('#rollingCylinder').setAttribute('apply-impulse-on-start', '');
-        document.querySelector('a-scene').setAttribute('force-vectors', '');
-      });
-
-      // MindAR tracking events
-      const sceneEl = document.querySelector('a-scene');
-      sceneEl.addEventListener('targetFound', event => {
-        console.log("Target found");
-        document.querySelector('#ar-content').setAttribute('visible', 'true');
+      // Set up MindAR
+      await setupAR();
+      
+      // Create 3D objects
+      createScene();
+      
+      // Start animation loop
+      animate();
+      
+      // Handle window resize
+      window.addEventListener('resize', onWindowResize);
+    }
+    
+    // Set up Cannon.js physics
+    function setupPhysics() {
+      physicsWorld = new CANNON.World();
+      physicsWorld.gravity.set(0, -9.82, 0);
+      physicsWorld.broadphase = new CANNON.NaiveBroadphase();
+      physicsWorld.solver.iterations = 10;
+    }
+    
+    // Set up MindAR
+    async function setupAR() {
+      mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: document.getElementById('container'),
+        imageTargetSrc: './rolling.mind',
       });
       
-      sceneEl.addEventListener('targetLost', event => {
-        console.log("Target lost");
-        document.querySelector('#ar-content').setAttribute('visible', 'false');
+      const { renderer: arRenderer, scene: arScene, camera: arCamera } = mindarThree;
+      
+      // Start AR
+      await mindarThree.start();
+      
+      // Add event listeners
+      arScene.addEventListener('targetFound', (event) => {
+        isTracking = true;
+        document.getElementById('ui').innerHTML = '<div>Marker detected</div><div id="position-info"></div><div id="velocity-info"></div>';
       });
-    </script>
-  </a-scene>
+      
+      arScene.addEventListener('targetLost', (event) => {
+        isTracking = false;
+      });
+    }
+    
+    // Create 3D scene
+    function createScene() {
+      // Floor
+      const floorGeometry = new THREE.PlaneGeometry(20, 20);
+      const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x7BC8A4 });
+      const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      
+      // Floor physics
+      const floorShape = new CANNON.Plane();
+      const floorBody = new CANNON.Body({ mass: 0 });
+      floorBody.addShape(floorShape);
+      floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+      physicsWorld.addBody(floorBody);
+      
+      // Inclined plane
+      const inclinedGeometry = new THREE.PlaneGeometry(10, 80);
+      const inclinedMaterial = new THREE.MeshStandardMaterial({ color: 0x7BC224 });
+      const inclinedMesh = new THREE.Mesh(inclinedGeometry, inclinedMaterial);
+      inclinedMesh.rotation.x = -Math.PI / 4;
+      inclinedMesh.position.y = 5;
+      inclinedMesh.receiveShadow = true;
+      
+      // Inclined plane physics
+      const inclinedShape = new CANNON.Plane();
+      const inclinedBody = new CANNON.Body({ mass: 0 });
+      inclinedBody.addShape(inclinedShape);
+      inclinedBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 4);
+      inclinedBody.position.set(0, 5, 0);
+      physicsWorld.addBody(inclinedBody);
+      
+      // Cylinder
+      const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
+      const cylinderMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+      cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+      cylinderMesh.rotation.z = Math.PI / 2;
+      cylinderMesh.position.set(0, 35, -10);
+      cylinderMesh.castShadow = true;
+      
+      // Cylinder physics
+      const cylinderShape = new CANNON.Cylinder(0.5, 0.5, 2, 32);
+      cylinderBody = new CANNON.Body({
+        mass: 10,
+        shape: cylinderShape,
+        linearDamping: 0.1,
+        angularDamping: 0.1
+      });
+      cylinderBody.position.set(0, 35, -10);
+      cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+      physicsWorld.addBody(cylinderBody);
+      
+      // Apply initial impulse
+      setTimeout(() => {
+        const impulse = new CANNON.Vec3(0, 0, 5);
+        const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
+        cylinderBody.applyImpulse(impulse, worldPoint);
+      }, 1000);
+      
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      directionalLight.position.set(10, 20, 0);
+      directionalLight.castShadow = true;
+      directionalLight.shadow.mapSize.width = 2048;
+      directionalLight.shadow.mapSize.height = 2048;
+      scene.add(directionalLight);
+      
+      // Create vector visualizations
+      createVectorVisualizations();
+      
+      // Add objects to scene
+      scene.add(floorMesh);
+      scene.add(inclinedMesh);
+      scene.add(cylinderMesh);
+    }
+    
+    // Create vector visualization objects
+    function createVectorVisualizations() {
+      // Gravity vector
+      const gravityDir = new THREE.Vector3(0, -1, 0);
+      gravityVector = new THREE.ArrowHelper(
+        gravityDir.clone().normalize(),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0x0000ff,
+        0.1,
+        0.1
+      );
+      gravityVector.visible = false;
+      scene.add(gravityVector);
+      
+      // Normal vector
+      normalVector = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0x00ff00,
+        0.1,
+        0.1
+      );
+      normalVector.visible = false;
+      scene.add(normalVector);
+      
+      // Friction vector
+      frictionVector = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0xffff00,
+        0.1,
+        0.1
+      );
+      frictionVector.visible = false;
+      scene.add(frictionVector);
+      
+      // Impulse vector
+      impulseVector = new THREE.ArrowHelper(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, 0),
+        2,
+        0xff0000,
+        0.1,
+        0.1
+      );
+      impulseVector.visible = false;
+      scene.add(impulseVector);
+      
+      // Show all vectors after a short delay
+      setTimeout(() => {
+        gravityVector.visible = true;
+        normalVector.visible = true;
+        frictionVector.visible = true;
+        impulseVector.visible = true;
+      }, 1500);
+    }
+    
+    // Update vector visualizations
+    function updateVectors() {
+      if (!cylinderBody) return;
+      
+      const pos = cylinderBody.position;
+      const mass = cylinderBody.mass;
+      const g = 9.82;
+      
+      // Update gravity vector
+      gravityVector.position.set(pos.x, pos.y, pos.z);
+      gravityVector.setDirection(new THREE.Vector3(0, -1, 0));
+      gravityVector.setLength(mass * g * 0.1);
+      
+      // Update normal vector (when on ground)
+      if (pos.y <= 0.5) {
+        normalVector.position.set(pos.x, pos.y, pos.z);
+        normalVector.setDirection(new THREE.Vector3(0, 1, 0));
+        normalVector.setLength(mass * g * 0.1);
+      }
+      
+      // Update friction vector
+      const velocity = cylinderBody.velocity;
+      if (velocity.length() > 0.1) {
+        const frictionDir = new THREE.Vector3(
+          -velocity.x * 0.5 / velocity.length(),
+          -velocity.y * 0.5 / velocity.length(),
+          -velocity.z * 0.5 / velocity.length()
+        );
+        frictionVector.position.set(pos.x, pos.y, pos.z);
+        frictionVector.setDirection(frictionDir.normalize());
+        frictionVector.setLength(frictionDir.length());
+      }
+      
+      // Update impulse vector
+      if (velocity.z > 0.1) {
+        impulseVector.position.set(pos.x, pos.y, pos.z);
+        impulseVector.setDirection(new THREE.Vector3(0, 0, 1));
+        impulseVector.setLength(1);
+      }
+      
+      // Update UI info
+      document.getElementById('position-info').textContent = 
+        `Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
+      document.getElementById('velocity-info').textContent = 
+        `Velocity: (${velocity.x.toFixed(2)}, ${velocity.y.toFixed(2)}, ${velocity.z.toFixed(2)})`;
+    }
+    
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Update physics
+      physicsWorld.step(fixedTimeStep);
+      
+      // Sync Three.js objects with physics bodies
+      if (cylinderBody && cylinderMesh) {
+        cylinderMesh.position.copy(cylinderBody.position);
+        cylinderMesh.quaternion.copy(cylinderBody.quaternion);
+      }
+      
+      // Update vector visualizations
+      updateVectors();
+      
+      // Render only when tracking
+      if (isTracking) {
+        renderer.render(scene, camera);
+      }
+    }
+    
+    // Handle window resize
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // Start the application
+    init();
+  </script>
 </body>
 </html>
