@@ -2,56 +2,61 @@
 <html lang="uk">
   <head>
     <meta charset="utf-8">
-    <title>A-Frame Сцена</title>
+    <title>3D-сцена з A-Frame</title>
+
+    <!-- A-Frame 1.7.1 -->
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+
+    <!-- MSDF текстовий компонент -->
     <script src="https://unpkg.com/aframe-msdf-text-component@^3.0.0/dist/aframe-msdf-text-component.min.js"></script>
+
     <style>
-      body { margin: 0; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
     </style>
   </head>
+
   <body>
-    <a-scene background="color: #101010">
+    <a-scene>
+      <a-sky color="#222"></a-sky>
 
-      <a-entity position="0 1.9 4">
-        <a-camera></a-camera>
+      <a-box position="-2 1 -4"
+             width="1" height="1" depth="1"
+             src="../textures/cloth.jpg"
+             animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
+      </a-box>
+
+      <a-sphere position="0 1 -4"
+                radius="0.75"
+                src="../textures/metal.jpg"
+                animation="property: scale; dir: alternate; dur: 2000; loop: true; to: 1.2 1.2 1.2">
+      </a-sphere>
+
+      <a-cylinder position="2 1 -4"
+                  height="1.5" radius="0.5"
+                  src="../textures/ice.jpg"
+                  animation="property: material.color; dir: alternate; dur: 3000; loop: true; to: #00ffff">
+      </a-cylinder>
+
+      <a-entity gltf-model="/models/cup.glb"
+                position="0 0 -2"
+                scale="0.5 0.5 0.5"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 7000">
       </a-entity>
 
-      <a-entity light="type: ambient; intensity: 0.6"></a-entity>
-      <a-entity light="type: directional; intensity: 0.8" position="1 3 2"></a-entity>
-
-      <a-entity id="scene-group" position="0 0 -4">
-
-        <a-entity 
-          msdf-text="font: fonts/volja-regular_w-msdf.json; text: Привіт, A-Frame!" 
-          position="0 2 0" 
-          scale="1 1 1" 
-          material="color: #33C3F0"
-          negate="false">
-        </a-entity>
-
-
-        <a-box position="-2 1 0" depth="1" height="1" width="1" 
-               src="textures/cloth.jpg"
-               animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
-        </a-box>
-
-        <a-sphere position="0 1 0" radius="0.75"
-                  src="textures/metal.jpg"
-                  animation="property: scale; dir: alternate; dur: 2000; loop: true; to: 1.5 1.5 1.5">
-        </a-sphere>
-
-        <a-cylinder position="2 1 0" height="1.5" radius="0.5"
-                    src="textures/ice.jpg"
-                    animation__color="property: material.color; dir: alternate; dur: 3000; loop: true; to: #00FFFF">
-        </a-cylinder>
-
-        <a-entity gltf-model="models/cup.glb"
-                  position="0 0 2"
-                  scale="0.5 0.5 0.5"
-                  animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
-        </a-entity>
+      <a-entity
+        msdf-text="font: ../fonts/volja-regular_w-msdf.json; text: Український текст"
+        position="-1 2.5 -4"
+        scale="0.6 0.6 0.6"
+        material="color: #FF99CC"
+        negate="false"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
       </a-entity>
 
+      <a-entity camera position="0 1.6 0" look-controls wasd-controls></a-entity>
     </a-scene>
   </body>
 </html>
