@@ -3,9 +3,9 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="utf-8">
-    <title>Three.js + Cannon-es + MindAR Physics</title>
+    <title>MindAR Physics Scene (All-in-One)</title>
     <style>
-        /* Стилі залишаються ті самі */
+        /* CSS код залишається тут */
         html, body {
             margin: 0;
             overflow: hidden;
@@ -25,6 +25,93 @@
     <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
 
-    <script type="module" src="./main.js"></script>
+    <script>
+        // Весь код з main.js тепер знаходиться тут
+        document.addEventListener('DOMContentLoaded', () => {
+    
+            const mindarThree = new MindARThree.MindARThree({
+                container: document.querySelector("#container"),
+                imageTargetSrc: "../patterns/rolling.mind",
+            });
+
+            const { renderer, scene, camera } = mindarThree;
+            const anchor = mindarThree.addAnchor(0);
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+            anchor.group.add(light);
+
+            const world = new CANNON.World({
+                gravity: new CANNON.Vec3(0, -9.82, 0),
+            });
+            world.broadphase = new CANNON.SAPBroadphase(world);
+
+            const objectsToUpdate = [];
+
+            const floorGeometry = new THREE.PlaneGeometry(20, 20);
+            const floorMaterial = new THREE.MeshBasicMaterial({ color: "#7BC8A4", transparent: true, opacity: 0.5 });
+            const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+            floorMesh.rotation.x = -Math.PI / 2;
+            anchor.group.add(floorMesh);
+
+            const floorShape = new CANNON.Plane();
+            const floorBody = new CANNON.Body({ mass: 0 });
+            floorBody.addShape(floorShape);
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.addBody(floorBody);
+
+            const inclinedPlaneGeometry = new THREE.PlaneGeometry(10, 15);
+            const inclinedPlaneMaterial = new THREE.MeshBasicMaterial({ color: "#7BC224", transparent: true, opacity: 0.5 });
+            const inclinedPlaneMesh = new THREE.Mesh(inclinedPlaneGeometry, inclinedPlaneMaterial);
+            inclinedPlaneMesh.position.set(0, 3, -4);
+            inclinedPlaneMesh.rotation.x = -Math.PI / 3;
+            anchor.group.add(inclinedPlaneMesh);
+
+            const inclinedPlaneShape = new CANNON.Plane();
+            const inclinedPlaneBody = new CANNON.Body({ mass: 0 });
+            inclinedPlaneBody.addShape(inclinedPlaneShape);
+            inclinedPlaneBody.position.copy(inclinedPlaneMesh.position);
+            inclinedPlaneBody.quaternion.copy(inclinedPlaneMesh.quaternion);
+            world.addBody(inclinedPlaneBody);
+
+            const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
+            const cylinderMaterial = new THREE.MeshBasicMaterial({ color: "red" });
+            const cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinderMesh.position.set(0, 8, -8);
+            cylinderMesh.rotation.z = Math.PI / 2;
+            anchor.group.add(cylinderMesh);
+
+            const cylinderShape = new CANNON.Cylinder(0.5, 0.5, 2, 16);
+            const cylinderBody = new CANNON.Body({
+                mass: 10,
+                shape: cylinderShape,
+                position: new CANNON.Vec3(0, 8, -8),
+                linearDamping: 0.1,
+                angularDamping: 0.1,
+            });
+            cylinderBody.quaternion.copy(cylinderMesh.quaternion);
+            world.addBody(cylinderBody);
+
+            objectsToUpdate.push({ mesh: cylinderMesh, body: cylinderBody });
+            
+            const clock = new THREE.Clock();
+
+            const start = async() => {
+                await mindarThree.start();
+                renderer.setAnimationLoop(() => {
+                    const deltaTime = clock.getDelta();
+                    
+                    world.step(1 / 60, deltaTime, 3);
+
+                    for (const object of objectsToUpdate) {
+                        object.mesh.position.copy(object.body.position);
+                        object.mesh.quaternion.copy(object.body.quaternion);
+                    }
+
+                    renderer.render(scene, camera);
+                });
+            }
+
+            start();
+        });
+    </script>
 </body>
 </html>
