@@ -1,124 +1,285 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Лабораторні роботи</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1a0000;
-      color: #f2f2f2;
-      overflow-x: hidden;
-    }
-
-    header {
-      background-color: #330000;
-      padding: 20px;
-      text-align: center;
-      color: #ffcccc;
-      font-size: 2em;
-      border-bottom: 2px solid #990000;
-      box-shadow: 0 0 15px #660000;
-    }
-
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 20px;
-    }
-
-    section {
-      background-color: #260000;
-      border: 2px solid #990000;
-      border-radius: 16px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(153, 0, 0, 0.5);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    section:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-    }
-
-    h2 {
-      color: #ff6666;
-      text-align: center;
-      border-bottom: 1px solid #990000;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      display: inline-block;
-      width: 100%;
-      padding: 10px 15px;
-      background-color: #330000;
-      color: #ff9999;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-    }
-
-    a:hover {
-      transform: scale(1.07);
-      color: #ffffff;
-      background-color: #660000;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-    }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR-сцена з трьома маркерами - Завдання 4 тиждень</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://unpkg.com/aframe-msdf-text-component@^3.0.0/dist/aframe-msdf-text-component.min.js"></script>
+    <style>
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .arjs-loader div {
+            text-align: center;
+            font-size: 1.25em;
+            color: white;
+        }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+        }
+    </style>
 </head>
-<body>
-  <header>
-    Лабораторні роботи
-  </header>
-
-  <main>
-    <section>
-      <h2>Тижні</h2>
-      <ul>
-        <li><a href="week1/index.html">Week 1</a></li>
-        <li><a href="week2/index.html">Week 2</a></li>
-        <li><a href="week3/index.html">Week 3</a></li>
-        <li><a href="week4/index.html">Week 4</a></li>
-        <li><a href="week5/index.html">Week 5</a></li>
-        <li><a href="week6/index.html">Week 6</a></li>
-        <li><a href="week7/index.html">Week 7</a></li>
-        <li><a href="week8/index.html">Week 8</a></li>
-        <li><a href="week9/index.html">Week 9</a></li>
-        <li><a href="week10/index.html">Week 10</a></li>
-        <li><a href="week11/index.html">Week 11</a></li>
-        <li><a href="week12/index.html">Week 12</a></li>
-        <li><a href="week13/index.html">Week 13</a></li>
-        <li><a href="week14/index.html">Week 14</a></li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Лабораторні</h2>
-      <ul>
-        <li><a href="lab1/index.html">Лабораторна 1</a></li>
-        <li><a href="lab2/index.html">Лабораторна 2</a></li>
-        <li><a href="lab3/index.html">Лабораторна 3</a></li>
-      </ul>
-    </section>
-  </main>
+<body style="margin: 0; overflow: hidden;">
+    <div class="arjs-loader">
+        <div>Завантаження AR, зачекайте...</div>
+    </div>
+    
+    <div id="info">
+        <h3>AR-сцена з трьома маркерами</h3>
+        <p>• Hiro - анімована сонячна система</p>
+        <p>• Kanji - інтерактивний куб</p>
+        <p>• Custom - модель чашки</p>
+    </div>
+    
+    <a-scene
+        embedded
+        arjs="sourceType: webcam; 
+              debugUIEnabled: false; 
+              trackingMethod: best;
+              detectionMode: mono_and_matrix; 
+              matrixCodeType: 3x3;
+              maxDetectionRate: 60;"
+        renderer="logarithmicDepthBuffer: true; 
+                 antialias: true; 
+                 alpha: true; 
+                 precision: high;
+                 colorManagement: true;
+                 physicallyCorrectLights: true;"
+        vr-mode-ui="enabled: false"
+    >
+        <!-- Перший маркер - HIRO -->
+        <a-marker preset="hiro" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+            <a-entity
+                id="solarSystemMini"
+                rotation="-90 0 0"
+                scale="0.3 0.3 0.3"
+                position="0 0 0"
+            >
+                <!-- Міні сонячна система -->
+                <!-- Сонце -->
+                <a-sphere 
+                    position="0 0 0" 
+                    radius="0.5" 
+                    src="../textures/sun.jpg"
+                    emissive="#ffaa00"
+                    emissive-intensity="0.5"
+                ></a-sphere>
+                
+                <!-- Земля -->
+                <a-entity
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
+                >
+                    <a-sphere 
+                        position="2 0 0" 
+                        radius="0.2" 
+                        src="../textures/earth.jpg"
+                        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
+                    ></a-sphere>
+                </a-entity>
+                
+                <!-- Марс -->
+                <a-entity
+                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 15000"
+                >
+                    <a-sphere 
+                        position="3 0 0" 
+                        radius="0.15" 
+                        src="../textures/mars.jpg"
+                        animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
+                    ></a-sphere>
+                </a-entity>
+                
+                <!-- Юпітер -->
+                <a-entity
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 25000"
+                >
+                    <a-sphere 
+                        position="4.5 0 0" 
+                        radius="0.4" 
+                        src="../textures/jupiter.jpg"
+                        animation="property: rotation; to: 0 360 0; loop: true; dur: 2000"
+                    ></a-sphere>
+                </a-entity>
+                
+                <!-- Текст -->
+                <a-text 
+                    value="Сонячна система" 
+                    font="../fonts/volja-regular_w-msdf.json" 
+                    negate="false" 
+                    color="#ffffff" 
+                    width="6" 
+                    position="0 2 0"
+                    align="center"
+                ></a-text>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Другий маркер - KANJI -->
+        <a-marker preset="kanji" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+            <a-entity
+                id="interactiveCube"
+                rotation="-90 0 0"
+                scale="0.5 0.5 0.5"
+                position="0 0 0"
+            >
+                <!-- Інтерактивний куб з анімаціями -->
+                <a-box
+                    position="0 0.5 0"
+                    width="1" height="1" depth="1"
+                    src="../textures/metal.jpg"
+                    animation="property: rotation; to: 360 360 0; loop: true; dur: 5000"
+                    animation__color="property: material.color; from: #ffffff; to: #ff00ff; dir: alternate; dur: 3000; loop: true"
+                    animation__scale="property: scale; to: 1.5 1.5 1.5; dir: alternate; dur: 2000; loop: true"
+                >
+                </a-box>
+                
+                <!-- Обертаючі частинки навколо куба -->
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+                    <a-sphere position="1.5 0.5 0" radius="0.1" color="#ff0000"></a-sphere>
+                    <a-sphere position="-1.5 0.5 0" radius="0.1" color="#00ff00"></a-sphere>
+                    <a-sphere position="0 0.5 1.5" radius="0.1" color="#0000ff"></a-sphere>
+                    <a-sphere position="0 0.5 -1.5" radius="0.1" color="#ffff00"></a-sphere>
+                </a-entity>
+                
+                <!-- Кільця навколо куба -->
+                <a-torus
+                    position="0 0.5 0"
+                    radius="2"
+                    radius-tubular="0.05"
+                    rotation="0 0 0"
+                    color="#00ffff"
+                    opacity="0.7"
+                    animation="property: rotation; to: 360 0 0; loop: true; dur: 6000"
+                ></a-torus>
+                
+                <a-torus
+                    position="0 0.5 0"
+                    radius="2"
+                    radius-tubular="0.05"
+                    rotation="90 0 0"
+                    color="#ff00ff"
+                    opacity="0.7"
+                    animation="property: rotation; to: 90 360 0; loop: true; dur: 6000"
+                ></a-torus>
+                
+                <!-- Текст -->
+                <a-text 
+                    value="Інтерактивний куб" 
+                    font="../fonts/volja-regular_w-msdf.json" 
+                    negate="false" 
+                    color="#00ffff" 
+                    width="5" 
+                    position="0 2 0"
+                    align="center"
+                ></a-text>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Третій маркер - ВЛАСНИЙ (використовуємо pattern-york) -->
+        <a-marker type="pattern" url="../patterns/pattern-york.patt" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
+            <a-entity
+                id="cupModel"
+                rotation="-90 0 0"
+                scale="0.5 0.5 0.5"
+                position="0 0 0"
+            >
+                <!-- Модель чашки -->
+                <a-entity 
+                    gltf-model="../models/cup.glb"
+                    position="0 0 0"
+                    scale="1 1 1"
+                    animation="property: rotation; to: 0 -360 0; loop: true; dur: 8000"
+                ></a-entity>
+                
+                <!-- Анімований пар з чашки -->
+                <a-entity id="steam">
+                    <a-cylinder
+                        position="0 1 0"
+                        radius="0.3"
+                        height="0.5"
+                        color="#ffffff"
+                        opacity="0.3"
+                        animation="property: position; to: 0 2 0; dur: 3000; loop: true"
+                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 3000; loop: true"
+                        animation__scale="property: scale; to: 1.5 1 1.5; dur: 3000; loop: true"
+                    ></a-cylinder>
+                    
+                    <a-cylinder
+                        position="0.2 1.2 0"
+                        radius="0.2"
+                        height="0.4"
+                        color="#ffffff"
+                        opacity="0.3"
+                        animation="property: position; to: 0.2 2.2 0; dur: 3500; loop: true"
+                        animation__opacity="property: material.opacity; from: 0.3; to: 0; dur: 3500; loop: true"
+                        animation__scale="property: scale; to: 1.3 1 1.3; dur: 3500; loop: true"
+                    ></a-cylinder>
+                </a-entity>
+                
+                <!-- Декоративні елементи -->
+                <a-torus-knot
+                    position="0 -0.5 0"
+                    radius="0.8"
+                    radius-tubular="0.1"
+                    p="2"
+                    q="3"
+                    color="#d4a574"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"
+                ></a-torus-knot>
+                
+                <!-- Текст -->
+                <a-text 
+                    value="Гаряча кава" 
+                    font="../fonts/volja-regular_w-msdf.json" 
+                    negate="false" 
+                    color="#d4a574" 
+                    width="5" 
+                    position="0 2 0"
+                    align="center"
+                    animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; dur: 2000; loop: true"
+                ></a-text>
+            </a-entity>
+        </a-marker>
+        
+        <!-- Камера -->
+        <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+        // Приховати завантажувач коли сцена готова
+        document.addEventListener("DOMContentLoaded", function() {
+            const scene = document.querySelector('a-scene');
+            const loader = document.querySelector('.arjs-loader');
+            
+            if (scene.hasLoaded) {
+                loader.style.display = 'none';
+            } else {
+                scene.addEventListener('loaded', function() {
+                    loader.style.display = 'none';
+                });
+            }
+        });
+    </script>
 </body>
 </html>
