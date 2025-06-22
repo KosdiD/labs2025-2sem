@@ -21,13 +21,22 @@
         height="20" 
         color="#7BC8A4">
       </a-plane>
-
+      
+      <a-plane 
+        ammo-body="type: static" 
+        ammo-shape="type: box"
+        position="5 0 0" 
+        rotation="-90 35 0" 
+        width="10" 
+        height="10" 
+        color="#7BC224">
+      </a-plane>
       <!-- Динамічний циліндр, що буде скатуватися -->
       <a-cylinder 
         id="rollingCylinder"
         geometry="primitive: cylinder; height: 2; radius: 0.5"
         material="color: red"
-        position="0 1 0"
+        position="0 10 0"
         ammo-body="type: dynamic; mass: 1; linearDamping: 0.2; angularDamping: 0.2; friction: 0.5;"
         ammo-shape="type: cylinder">
       </a-cylinder>
