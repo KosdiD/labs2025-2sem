@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Physics Visualization</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.2.2/dist/aframe-physics-system.min.js"></script>
+    <title>Physics Visualization - Corrected</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
 </head>
 <body>
     <a-scene physics="gravity: -9.8; debug: false" background="color: #1a1a1a" force-visualizer>
 
         <a-assets>
-            <img id="hardwood" src="https://raw.githubusercontent.com/aframevr/sample-assets/master/assets/images/wood/hardwood.jpg" crossorigin="anonymous">
-            <img id="disturb" src="https://raw.githubusercontent.com/aframevr/sample-assets/master/assets/images/disturb.jpg" crossorigin="anonymous">
+            <img id="hardwood" src="../textures/hardwood.jpg" crossorigin="anonymous">
+            <img id="disturb" src="../textures/disturb.jpg" crossorigin="anonymous">
         </a-assets>
 
         <a-light type="ambient" intensity="0.5"></a-light>
@@ -25,7 +25,8 @@
             height="0.2"
             depth="10"
             material="src: #disturb; repeat: 2 5"
-            shadow="receive: true">
+            shadow="receive: true"
+            data-raycastable>
         </a-box>
 
         <a-plane
@@ -35,7 +36,8 @@
             width="20"
             height="20"
             material="color: #111; opacity: 0.8"
-            shadow="receive: true">
+            shadow="receive: true"
+            data-raycastable>
         </a-plane>
 
         <a-cylinder
@@ -46,74 +48,27 @@
             radius="0.3"
             height="0.8"
             material="src: #hardwood; repeat: 2 1"
-            shadow="cast: true">
+            shadow="cast: true"
+            data-raycastable>
         </a-cylinder>
 
         <a-entity id="force-vectors">
             <a-entity id="weight-vector" visible="true">
-                <a-cylinder
-                    position="0 -0.6 0"
-                    radius="0.03"
-                    height="1.2"
-                    color="#ff0000">
-                </a-cylinder>
-                <a-cone
-                    position="0 -1.2 0"
-                    radius-bottom="0.1"
-                    radius-top="0"
-                    height="0.2"
-                    color="#ff0000">
-                </a-cone>
-                <a-text
-                    value="mg"
-                    position="0.2 -0.6 0"
-                    align="center"
-                    color="#ff0000">
-                </a-text>
+                <a-cylinder position="0 -0.6 0" radius="0.03" height="1.2" color="#ff0000"></a-cylinder>
+                <a-cone position="0 -1.2 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#ff0000"></a-cone>
+                <a-text value="mg" position="0.2 -0.6 0" align="center" color="#ff0000" width="4"></a-text>
             </a-entity>
 
             <a-entity id="normal-vector" visible="false">
-                <a-cylinder
-                    position="0 0.5 0"
-                    radius="0.03"
-                    height="1.0"
-                    color="#0080ff">
-                </a-cylinder>
-                <a-cone
-                    position="0 1.0 0"
-                    radius-bottom="0.1"
-                    radius-top="0"
-                    height="0.2"
-                    color="#0080ff">
-                </a-cone>
-                 <a-text
-                    value="N"
-                    position="0.2 0.8 0"
-                    align="center"
-                    color="#0080ff">
-                </a-text>
+                <a-cylinder position="0 0.5 0" radius="0.03" height="1.0" color="#0080ff"></a-cylinder>
+                <a-cone position="0 1.0 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#0080ff"></a-cone>
+                <a-text value="N" position="0.2 0.8 0" align="center" color="#0080ff" width="4"></a-text>
             </a-entity>
 
             <a-entity id="friction-vector" visible="false">
-                <a-cylinder
-                    position="0 0.4 0"
-                    radius="0.03"
-                    height="0.8"
-                    color="#00ff00">
-                </a-cylinder>
-                <a-cone
-                    position="0 0.8 0"
-                    radius-bottom="0.1"
-                    radius-top="0"
-                    height="0.2"
-                    color="#00ff00">
-                </a-cone>
-                 <a-text
-                    value="f"
-                    position="0.2 0.6 0"
-                    align="center"
-                    color="#00ff00">
-                </a-text>
+                <a-cylinder position="0 0.4 0" radius="0.03" height="0.8" color="#00ff00"></a-cylinder>
+                <a-cone position="0 0.8 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#00ff00"></a-cone>
+                <a-text value="f" position="0.2 0.6 0" align="center" color="#00ff00" width="4"></a-text>
             </a-entity>
         </a-entity>
 
@@ -127,81 +82,56 @@
 
         <a-entity position="0 2 2">
             <a-camera wasd-controls="acceleration: 20" look-controls>
-                <a-cursor
-                    geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-                    material="color: white; shader: flat">
-                </a-cursor>
+                <a-cursor raycaster="objects: [data-raycastable]"></a-cursor>
             </a-camera>
         </a-entity>
     </a-scene>
 
     <script>
     /**
-     * Controls the visibility and orientation of force vectors acting on a cylinder.
-     * This component should be attached to the <a-scene> element.
+     * Компонент для керування візуалізацією векторів сил, що діють на циліндр.
+     * Прикріплюється до елемента <a-scene>.
      */
     AFRAME.registerComponent('force-visualizer', {
         init: function () {
-            // Find the elements we need to work with
             this.mainCylinder = document.querySelector('#main-cylinder');
             this.plane = document.querySelector('#plane');
             this.weightVector = document.querySelector('#weight-vector');
             this.normalVector = document.querySelector('#normal-vector');
             this.frictionVector = document.querySelector('#friction-vector');
             
-            // Get properties needed for calculations
             this.planeRotation = this.plane.getAttribute('rotation');
             this.cylinderRadius = this.mainCylinder.getAttribute('radius');
             
-            // Temporary vectors for calculations to avoid creating new objects in the loop
             this.planePosition = new THREE.Vector3();
             this.cylinderPosition = new THREE.Vector3();
         },
 
-        /**
-         * The tick function is called on every frame.
-         */
         tick: function () {
-            if (!this.mainCylinder.body) {
-                // Wait for the physics body to be initialized
-                return;
-            }
+            if (!this.mainCylinder.body) { return; }
 
-            // Get the current world positions of the cylinder and plane
             this.mainCylinder.object3D.getWorldPosition(this.cylinderPosition);
             this.plane.object3D.getWorldPosition(this.planePosition);
             
-            // --- Step 1: Update all vectors to follow the cylinder ---
+            // Крок 1: Вектори завжди слідують за циліндром
             this.weightVector.setAttribute('position', this.cylinderPosition);
             this.normalVector.setAttribute('position', this.cylinderPosition);
             this.frictionVector.setAttribute('position', this.cylinderPosition);
 
-            // --- Step 2: Check for contact between cylinder and plane ---
-            
-            // Calculate the expected y-position of a point on the plane's surface
-            // directly below or above the cylinder.
+            // Крок 2: Перевірка контакту циліндра з площиною
             const angleRad = THREE.MathUtils.degToRad(this.planeRotation.x);
             const relativeZ = this.cylinderPosition.z - this.planePosition.z;
             const surfaceY = this.planePosition.y + relativeZ * Math.tan(angleRad);
-
-            // Check if the distance from the cylinder's center to the surface is
-            // approximately equal to its radius. We add a small tolerance.
             const distanceToSurface = this.cylinderPosition.y - surfaceY;
             const onPlane = Math.abs(distanceToSurface - this.cylinderRadius) < 0.05;
 
-            // --- Step 3: Update vector visibility and orientation ---
+            // Крок 3: Оновлення видимості та орієнтації векторів
             this.normalVector.setAttribute('visible', onPlane);
             this.frictionVector.setAttribute('visible', onPlane);
 
             if (onPlane) {
-                // If on the plane, orient the Normal and Friction vectors correctly.
-                
-                // The Normal force is perpendicular to the plane.
-                // Its rotation should match the plane's rotation.
                 this.normalVector.setAttribute('rotation', this.planeRotation);
                 
-                // The Friction force is parallel to the plane, pointing up the slope.
-                // We take the plane's rotation and add 90 degrees.
                 const frictionRotation = {
                     x: this.planeRotation.x + 90,
                     y: this.planeRotation.y,
@@ -212,27 +142,19 @@
         }
     });
 
-    // --- Auxiliary code for spawning and resetting cylinders (from your original file) ---
-    
+    // Допоміжний код для створення та скидання циліндрів (з вашого файлу)
     function spawnCylinder() {
         const scene = document.querySelector('a-scene');
         const cylinder = document.createElement('a-cylinder');
         
         cylinder.setAttribute('dynamic-body', 'shape: cylinder; cylinderAxis: x');
-        cylinder.setAttribute('position', {
-            x: -1 + (Math.random() - 0.5) * 0.5,
-            y: 3,
-            z: -7
-        });
+        cylinder.setAttribute('position', { x: -1 + (Math.random() - 0.5) * 0.5, y: 3, z: -7 });
         cylinder.setAttribute('rotation', '0 0 90');
         cylinder.setAttribute('radius', 0.2 + Math.random() * 0.2);
         cylinder.setAttribute('height', 0.6 + Math.random() * 0.4);
-        cylinder.setAttribute('material', {
-            color: `hsl(${Math.random() * 360}, 70%, 50%)`,
-            metalness: 0.3,
-            roughness: 0.7
-        });
+        cylinder.setAttribute('material', { color: `hsl(${Math.random() * 360}, 70%, 50%)`, metalness: 0.3, roughness: 0.7 });
         cylinder.setAttribute('shadow', 'cast: true');
+        cylinder.setAttribute('data-raycastable', ''); // Робимо нові циліндри інтерактивними
         
         scene.appendChild(cylinder);
         
@@ -249,14 +171,13 @@
         const cylinder = document.querySelector('#main-cylinder');
         if (cylinder && cylinder.body) {
             const pos = cylinder.getAttribute('position');
-            if (pos.y < -10) { // Reset if it falls far
+            if (pos.y < -10) {
                 cylinder.body.position.set(-1, 3, -7);
                 cylinder.body.velocity.set(0, 0, 0);
                 cylinder.body.angularVelocity.set(0, 0, 0);
             }
         }
     }, 500);
-
     </script>
 </body>
 </html>
