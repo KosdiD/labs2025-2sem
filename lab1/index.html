@@ -1,124 +1,85 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Лабораторні роботи</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1a0000;
-      color: #f2f2f2;
-      overflow-x: hidden;
-    }
-
-    header {
-      background-color: #330000;
-      padding: 20px;
-      text-align: center;
-      color: #ffcccc;
-      font-size: 2em;
-      border-bottom: 2px solid #990000;
-      box-shadow: 0 0 15px #660000;
-    }
-
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 20px;
-    }
-
-    section {
-      background-color: #260000;
-      border: 2px solid #990000;
-      border-radius: 16px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(153, 0, 0, 0.5);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    section:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-    }
-
-    h2 {
-      color: #ff6666;
-      text-align: center;
-      border-bottom: 1px solid #990000;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      display: inline-block;
-      width: 100%;
-      padding: 10px 15px;
-      background-color: #330000;
-      color: #ff9999;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-    }
-
-    a:hover {
-      transform: scale(1.07);
-      color: #ffffff;
-      background-color: #660000;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-    }
-  </style>
+  <title>A-Frame Rolling Cylinder AR</title>
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
-  <header>
-    Лабораторні роботи
-  </header>
+<body style="margin : 0px; overflow: hidden;">
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
 
-  <main>
-    <section>
-      <h2>Тижні</h2>
-      <ul>
-        <li><a href="week1/index.html">Week 1</a></li>
-        <li><a href="week2/index.html">Week 2</a></li>
-        <li><a href="week3/index.html">Week 3</a></li>
-        <li><a href="week4/index.html">Week 4</a></li>
-        <li><a href="week5/index.html">Week 5</a></li>
-        <li><a href="week6/index.html">Week 6</a></li>
-        <li><a href="week7/index.html">Week 7</a></li>
-        <li><a href="week8/index.html">Week 8</a></li>
-        <li><a href="week9/index.html">Week 9</a></li>
-        <li><a href="week10/index.html">Week 10</a></li>
-        <li><a href="week11/index.html">Week 11</a></li>
-        <li><a href="week12/index.html">Week 12</a></li>
-        <li><a href="week13/index.html">Week 13</a></li>
-        <li><a href="week14/index.html">Week 14</a></li>
-      </ul>
-    </section>
+    <a-assets>
+      <img id="hardwood" src="../textures/hardwood.jpg">
+      <img id="disturb" src="../textures/disturb.jpg">
+      <a-asset-item id="font-json" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
+      <a-asset-item id="font-png" src="../fonts/volja-regular_w-msdf.png"></a-asset-item>
+    </a-assets>
 
-    <section>
-      <h2>Лабораторні</h2>
-      <ul>
-        <li><a href="lab1/index.html">Лабораторна 1</a></li>
-        <li><a href="lab2/index.html">Лабораторна 2</a></li>
-        <li><a href="lab3/index.html">Лабораторна 3</a></li>
-      </ul>
-    </section>
-  </main>
+    <a-marker type="pattern" url="../patterns/rollingstones.patt">
+
+      <a-plane
+        position="0 -0.5 0"
+        rotation="-70 0 0"
+        width="4"
+        height="2"
+        material="src: #disturb; repeat: 2 1;">
+      </a-plane>
+
+      <a-entity id="rolling-cylinder">
+        <a-cylinder
+          id="cylinder"
+          position="0 0.8 -0.8"
+          rotation="0 0 -20"
+          radius="0.25"
+          height="0.5"
+          material="src: #hardwood">
+          <a-animation
+            attribute="position"
+            dur="4000"
+            from="0 0.8 -0.8"
+            to="0 -0.2 0.8"
+            repeat="indefinite"
+            easing="linear">
+          </a-animation>
+          <a-animation
+            attribute="rotation"
+            dur="4000"
+            from="0 0 -20"
+            to="360 0 -20"
+            repeat="indefinite"
+            easing="linear">
+          </a-animation>
+        </a-cylinder>
+
+        <a-entity
+          line="start: 0 0.8 -0.8; end: 0 0.2 -0.8; color: red"
+          text="font: ../fonts/volja-regular_w-msdf.json; value: mg; color: red; align: center; width: 2; transparent: true; negate: false;"
+          position="-0.15 0.4 -0.8"
+          rotation="0 0 0">
+        </a-entity>
+
+
+        <a-entity
+          line="start: 0 0.8 -0.8; end: 0.2 1.1 -0.8; color: blue"
+           text="font: ../fonts/volja-regular_w-msdf.json; value: N; color: blue; align: center; width: 2; transparent: true; negate: false;"
+          position="0.25 1.0 -0.8"
+          rotation="0 0 70">
+        </a-entity>
+
+        <a-entity
+          line="start: 0 0.8 -0.8; end: -0.4 0.6 -0.8; color: green"
+          text="font: ../fonts/volja-regular_w-msdf.json; value: F; color: green; align: center; width: 2; transparent: true; negate: false;"
+          position="-0.3 0.8 -0.8"
+          rotation="0 0 -20">
+        </a-entity>
+      </a-entity>
+
+      <a-entity light="type: ambient; color: #BBB"></a-entity>
+      <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-0.5 1 1"></a-entity>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
 </body>
 </html>
