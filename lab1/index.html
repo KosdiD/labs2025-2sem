@@ -1,183 +1,65 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Physics Visualization - Corrected</title>
-    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
-</head>
-<body>
-    <a-scene physics="gravity: -9.8; debug: false" background="color: #1a1a1a" force-visualizer>
+  <head>
+    <meta charset="utf-8">
+    <title>Rolling Cylinder Example</title>
+    <!-- Підключення Ammo.js -->
+    <script src="https://mixedreality.mozilla.org/ammo.js/builds/ammo.wasm.js"></script>
+    <!-- Підключення aframe-physics-system -->
+    <script src="http://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
+  </head>
+  <body>
+    <a-scene physics="driver: ammo; debug: true; debugDrawMode: 1">
+      <!-- Статична площина як підлога -->
+      <a-plane 
+        ammo-body="type: static" 
+        ammo-shape="type: box"
+        position="0 0 0" 
+        rotation="-90 0 0" 
+        width="20" 
+        height="20" 
+        color="#7BC8A4">
+      </a-plane>
 
-        <a-assets>
-            <img id="hardwood" src="../textures/hardwood.jpg" crossorigin="anonymous">
-            <img id="disturb" src="../textures/disturb.jpg" crossorigin="anonymous">
-        </a-assets>
+      <!-- Динамічний циліндр, що буде скатуватися -->
+      <a-cylinder 
+        id="rollingCylinder"
+        geometry="primitive: cylinder; height: 2; radius: 0.5"
+        material="color: red"
+        position="0 1 0"
+        ammo-body="type: dynamic; mass: 1; linearDamping: 0.2; angularDamping: 0.2; friction: 0.5;"
+        ammo-shape="type: cylinder">
+      </a-cylinder>
 
-        <a-light type="ambient" intensity="0.5"></a-light>
-        <a-light type="directional" position="2 10 2" intensity="0.8" castShadow="true"></a-light>
+      <!-- Камера для спостереження за сценою -->
+      <a-entity camera position="0 5 10" look-controls wasd-controls></a-entity>
 
-        <a-box
-            id="plane"
-            static-body
-            position="0 0 -5"
-            rotation="-30 0 0"
-            width="4"
-            height="0.2"
-            depth="10"
-            material="src: #disturb; repeat: 2 5"
-            shadow="receive: true"
-            data-raycastable>
-        </a-box>
+      <script>
+        // Компонент для застосування початкового імпульсу до циліндра,
+        // щоб він одразу отримав рух (і, можливо, почав обертатись).
+        AFRAME.registerComponent('apply-impulse-on-load', {
+          init: function () {
+            var el = this.el;
+            el.addEventListener('body-loaded', function () {
+              // Створюємо вектор імпульсу: напрямок за оссю X
+              var impulse = new Ammo.btVector3(4, 0, 0);
+              // Вектор положення відносно центра тіла
+              var relPos = new Ammo.btVector3(0, 0, 0);
+              // Застосовуємо імпульс до тіла циліндра
+              el.body.applyImpulse(impulse, relPos);
+              // Звільняємо пам'ять, що виділена для векторів
+              Ammo.destroy(impulse);
+              Ammo.destroy(relPos);
+            });
+          }
+        });
 
-        <a-plane
-            static-body
-            position="0 -3 -5"
-            rotation="-90 0 0"
-            width="20"
-            height="20"
-            material="color: #111; opacity: 0.8"
-            shadow="receive: true"
-            data-raycastable>
-        </a-plane>
-
-        <a-cylinder
-            id="main-cylinder"
-            dynamic-body="shape: cylinder; cylinderAxis: x"
-            position="-1 3 -7"
-            rotation="0 0 90"
-            radius="0.3"
-            height="0.8"
-            material="src: #hardwood; repeat: 2 1"
-            shadow="cast: true"
-            data-raycastable>
-        </a-cylinder>
-
-        <a-entity id="force-vectors">
-            <a-entity id="weight-vector" visible="true">
-                <a-cylinder position="0 -0.6 0" radius="0.03" height="1.2" color="#ff0000"></a-cylinder>
-                <a-cone position="0 -1.2 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#ff0000"></a-cone>
-                <a-text value="mg" position="0.2 -0.6 0" align="center" color="#ff0000" width="4"></a-text>
-            </a-entity>
-
-            <a-entity id="normal-vector" visible="false">
-                <a-cylinder position="0 0.5 0" radius="0.03" height="1.0" color="#0080ff"></a-cylinder>
-                <a-cone position="0 1.0 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#0080ff"></a-cone>
-                <a-text value="N" position="0.2 0.8 0" align="center" color="#0080ff" width="4"></a-text>
-            </a-entity>
-
-            <a-entity id="friction-vector" visible="false">
-                <a-cylinder position="0 0.4 0" radius="0.03" height="0.8" color="#00ff00"></a-cylinder>
-                <a-cone position="0 0.8 0" radius-bottom="0.1" radius-top="0" height="0.2" color="#00ff00"></a-cone>
-                <a-text value="f" position="0.2 0.6 0" align="center" color="#00ff00" width="4"></a-text>
-            </a-entity>
-        </a-entity>
-
-        <a-text
-            value="Cylinder on 30-degree Incline\nRed: Weight (mg)\nBlue: Normal Force (N)\nGreen: Friction (f)"
-            position="-3.5 4.5 -5"
-            width="4"
-            align="left"
-            color="white">
-        </a-text>
-
-        <a-entity position="0 2 2">
-            <a-camera wasd-controls="acceleration: 20" look-controls>
-                <a-cursor raycaster="objects: [data-raycastable]"></a-cursor>
-            </a-camera>
-        </a-entity>
+        // Додаємо компонент до циліндра після завантаження DOM
+        document.addEventListener('DOMContentLoaded', function () {
+          var cylinder = document.querySelector('#rollingCylinder');
+          cylinder.setAttribute('apply-impulse-on-load', '');
+        });
+      </script>
     </a-scene>
-
-    <script>
-    /**
-     * Компонент для керування візуалізацією векторів сил, що діють на циліндр.
-     * Прикріплюється до елемента <a-scene>.
-     */
-    AFRAME.registerComponent('force-visualizer', {
-        init: function () {
-            this.mainCylinder = document.querySelector('#main-cylinder');
-            this.plane = document.querySelector('#plane');
-            this.weightVector = document.querySelector('#weight-vector');
-            this.normalVector = document.querySelector('#normal-vector');
-            this.frictionVector = document.querySelector('#friction-vector');
-            
-            this.planeRotation = this.plane.getAttribute('rotation');
-            this.cylinderRadius = this.mainCylinder.getAttribute('radius');
-            
-            this.planePosition = new THREE.Vector3();
-            this.cylinderPosition = new THREE.Vector3();
-        },
-
-        tick: function () {
-            if (!this.mainCylinder.body) { return; }
-
-            this.mainCylinder.object3D.getWorldPosition(this.cylinderPosition);
-            this.plane.object3D.getWorldPosition(this.planePosition);
-            
-            // Крок 1: Вектори завжди слідують за циліндром
-            this.weightVector.setAttribute('position', this.cylinderPosition);
-            this.normalVector.setAttribute('position', this.cylinderPosition);
-            this.frictionVector.setAttribute('position', this.cylinderPosition);
-
-            // Крок 2: Перевірка контакту циліндра з площиною
-            const angleRad = THREE.MathUtils.degToRad(this.planeRotation.x);
-            const relativeZ = this.cylinderPosition.z - this.planePosition.z;
-            const surfaceY = this.planePosition.y + relativeZ * Math.tan(angleRad);
-            const distanceToSurface = this.cylinderPosition.y - surfaceY;
-            const onPlane = Math.abs(distanceToSurface - this.cylinderRadius) < 0.05;
-
-            // Крок 3: Оновлення видимості та орієнтації векторів
-            this.normalVector.setAttribute('visible', onPlane);
-            this.frictionVector.setAttribute('visible', onPlane);
-
-            if (onPlane) {
-                this.normalVector.setAttribute('rotation', this.planeRotation);
-                
-                const frictionRotation = {
-                    x: this.planeRotation.x + 90,
-                    y: this.planeRotation.y,
-                    z: this.planeRotation.z
-                };
-                this.frictionVector.setAttribute('rotation', frictionRotation);
-            }
-        }
-    });
-
-    // Допоміжний код для створення та скидання циліндрів (з вашого файлу)
-    function spawnCylinder() {
-        const scene = document.querySelector('a-scene');
-        const cylinder = document.createElement('a-cylinder');
-        
-        cylinder.setAttribute('dynamic-body', 'shape: cylinder; cylinderAxis: x');
-        cylinder.setAttribute('position', { x: -1 + (Math.random() - 0.5) * 0.5, y: 3, z: -7 });
-        cylinder.setAttribute('rotation', '0 0 90');
-        cylinder.setAttribute('radius', 0.2 + Math.random() * 0.2);
-        cylinder.setAttribute('height', 0.6 + Math.random() * 0.4);
-        cylinder.setAttribute('material', { color: `hsl(${Math.random() * 360}, 70%, 50%)`, metalness: 0.3, roughness: 0.7 });
-        cylinder.setAttribute('shadow', 'cast: true');
-        cylinder.setAttribute('data-raycastable', ''); // Робимо нові циліндри інтерактивними
-        
-        scene.appendChild(cylinder);
-        
-        setTimeout(() => {
-            if (cylinder.parentNode) {
-                cylinder.parentNode.removeChild(cylinder);
-            }
-        }, 15000);
-    }
-
-    setInterval(spawnCylinder, 4000);
-
-    setInterval(() => {
-        const cylinder = document.querySelector('#main-cylinder');
-        if (cylinder && cylinder.body) {
-            const pos = cylinder.getAttribute('position');
-            if (pos.y < -10) {
-                cylinder.body.position.set(-1, 3, -7);
-                cylinder.body.velocity.set(0, 0, 0);
-                cylinder.body.angularVelocity.set(0, 0, 0);
-            }
-        }
-    }, 500);
-    </script>
-</body>
+  </body>
 </html>
