@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="utf-8">
-    <title>WebXR Physics Scene with ARButton</title>
+    <title>WebXR Physics Scene (All-in-One)</title>
     <style>
         html, body {
             margin: 0;
@@ -11,7 +11,6 @@
             width: 100%;
             height: 100%;
         }
-        /* Стиль для кнопки AR, щоб вона не перекривала контент */
         #ar-button {
             position: absolute;
             bottom: 20px;
@@ -41,6 +40,158 @@
     
     <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"></script>
     
-    <script type="module" src="./main.js"></script>
+    <script type="module">
+        // Імпорти тепер працюють прямо тут
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.xr.enabled = true;
+            document.querySelector("#container").appendChild(renderer.domElement);
+
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+            light.position.set(0.5, 1, 0.25);
+            scene.add(light);
+
+            const world = new CANNON.World({
+                gravity: new CANNON.Vec3(0, -9.82, 0),
+            });
+            const objectsToUpdate = [];
+
+            const contentGroup = new THREE.Group();
+            contentGroup.visible = false;
+
+            const floorGeometry = new THREE.PlaneGeometry(20, 20);
+            const floorMaterial = new THREE.MeshStandardMaterial({ color: "#7BC8A4", transparent: true, opacity: 0.5 });
+            const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+            floorMesh.rotation.x = -Math.PI / 2;
+            contentGroup.add(floorMesh);
+
+            const floorShape = new CANNON.Plane();
+            const floorBody = new CANNON.Body({ mass: 0 });
+            floorBody.addShape(floorShape);
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.addBody(floorBody);
+
+            const inclinedPlaneGeometry = new THREE.PlaneGeometry(5, 7);
+            const inclinedPlaneMaterial = new THREE.MeshStandardMaterial({ color: "#7BC224", transparent: true, opacity: 0.5 });
+            const inclinedPlaneMesh = new THREE.Mesh(inclinedPlaneGeometry, inclinedPlaneMaterial);
+            inclinedPlaneMesh.position.set(0, 1.5, -2);
+            inclinedPlaneMesh.rotation.x = -Math.PI / 3;
+            contentGroup.add(inclinedPlaneMesh);
+
+            const inclinedPlaneShape = new CANNON.Plane();
+            const inclinedPlaneBody = new CANNON.Body({ mass: 0 });
+            inclinedPlaneBody.addShape(inclinedPlaneShape);
+            inclinedPlaneBody.position.copy(inclinedPlaneMesh.position);
+            inclinedPlaneBody.quaternion.copy(inclinedPlaneMesh.quaternion);
+            world.addBody(inclinedPlaneBody);
+
+            const cylinderGeometry = new THREE.CylinderGeometry(0.25, 0.25, 1, 32);
+            const cylinderMaterial = new THREE.MeshStandardMaterial({ color: "red" });
+            const cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            const cylinderInitialPosition = new THREE.Vector3(0, 3.5, -3.5);
+            cylinderMesh.position.copy(cylinderInitialPosition);
+            cylinderMesh.rotation.z = Math.PI / 2;
+            contentGroup.add(cylinderMesh);
+
+            const cylinderShape = new CANNON.Cylinder(0.25, 0.25, 1, 16);
+            const cylinderBody = new CANNON.Body({
+                mass: 10,
+                shape: cylinderShape,
+                position: new CANNON.Vec3().copy(cylinderInitialPosition),
+            });
+            cylinderBody.quaternion.copy(cylinderMesh.quaternion);
+            world.addBody(cylinderBody);
+            objectsToUpdate.push({ mesh: cylinderMesh, body: cylinderBody });
+            
+            scene.add(contentGroup);
+
+            let hitTestSource = null;
+            let hitTestSourceRequested = false;
+            let isScenePlaced = false;
+
+            const button = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+            button.id = 'ar-button';
+            document.body.appendChild(button);
+
+            const controller = renderer.xr.getController(0);
+            controller.addEventListener('select', onSelect);
+            scene.add(controller);
+
+            function onSelect() {
+                if (contentGroup.visible) return;
+                if (reticle.visible) {
+                    contentGroup.position.setFromMatrixPosition(reticle.matrix);
+                    
+                    // Оновлюємо позиції фізичних тіл відносно позиції групи
+                    floorBody.position.copy(floorMesh.position).add(contentGroup.position);
+                    inclinedPlaneBody.position.copy(inclinedPlaneMesh.position).add(contentGroup.position);
+                    cylinderBody.position.copy(cylinderMesh.position).add(contentGroup.position);
+
+                    contentGroup.visible = true;
+                    isScenePlaced = true;
+                }
+            }
+
+            const reticle = new THREE.Mesh(
+                new THREE.RingGeometry(0.05, 0.07, 32).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial()
+            );
+            reticle.matrixAutoUpdate = false;
+            reticle.visible = false;
+            scene.add(reticle);
+
+            const clock = new THREE.Clock();
+
+            renderer.setAnimationLoop((timestamp, frame) => {
+                if (frame) {
+                    if (!hitTestSourceRequested) {
+                        const session = renderer.xr.getSession();
+                        session.requestReferenceSpace('viewer').then((referenceSpace) => {
+                            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                                hitTestSource = source;
+                            });
+                        });
+                        hitTestSourceRequested = true;
+                        session.addEventListener('end', () => {
+                            hitTestSourceRequested = false;
+                            hitTestSource = null;
+                        });
+                    }
+
+                    if (hitTestSource) {
+                        const hitTestResults = frame.getHitTestResults(hitTestSource);
+                        if (hitTestResults.length > 0) {
+                            const hit = hitTestResults[0];
+                            reticle.visible = true;
+                            const pose = hit.getPose(renderer.xr.getReferenceSpace());
+                            reticle.matrix.fromArray(pose.transform.matrix);
+                        } else {
+                            reticle.visible = false;
+                        }
+                    }
+                }
+
+                if (isScenePlaced) {
+                    const deltaTime = clock.getDelta();
+                    world.step(1 / 60, deltaTime, 3);
+                    for (const object of objectsToUpdate) {
+                        // Тепер копіюємо позицію з фізичного тіла назад у сітку,
+                        // але віднімаємо позицію групи, щоб отримати локальні координати
+                        object.mesh.position.copy(object.body.position).sub(contentGroup.position);
+                        object.mesh.quaternion.copy(object.body.quaternion);
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            });
+        });
+    </script>
 </body>
 </html>
