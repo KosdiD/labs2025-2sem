@@ -39,8 +39,11 @@
             debugUIEnabled: false; 
             trackingMethod: best;
             detectionMode: mono_and_matrix; 
-            matrixCodeType: 3x3;"
-      renderer="logarithmicDepthBuffer: true;"
+            matrixCodeType: 3x3;
+            maxDetectionRate: 60;
+            canvasWidth: 1280;
+            canvasHeight: 960;"
+      renderer="logarithmicDepthBuffer: true; antialias: true; alpha: true; precision: high;"
       vr-mode-ui="enabled: false"
     >
       <!-- Перший маркер - pattern-jup -->
@@ -142,7 +145,7 @@
           
           <!-- Текст з анімацією -->
           <a-text 
-            value="Кава для вас" 
+            value="Чай для вас" 
             font="../fonts/volja-regular_w-msdf.json" 
             negate="false" 
             color="#ffff00" 
