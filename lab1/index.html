@@ -1,74 +1,76 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <title>A-Frame AR [Діагностика з Hiro маркером]</title>
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.0/aframe/build/aframe-ar.js"></script>
-  <script src="https://unpkg.com/aframe-line-component@1.2.1/dist/aframe-line-component.min.js"></script>
-</head>
+  <head>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe/mindar-aframe.prod.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden">
+    <script>
+      AFRAME.registerComponent("roll-animation", {
+        tick: function (time, timeDelta) {
+          const el = this.el;
+          const pos = el.object3D.position;
+          const rot = el.object3D.rotation;
 
-<body style="margin: 0px; overflow: hidden;">
-  <a-scene
-    embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    renderer="logarithmicDepthBuffer: true;">
+          // рух вниз по похилій
+          if (pos.x < 1.5) {
+            pos.x += 0.003 * timeDelta;
+            pos.y -= 0.0015 * timeDelta;
+            rot.z += 0.0025 * timeDelta;
+          }
+        },
+      });
+    </script>
 
-    <a-assets>
-      <img id="hardwood" src="../textures/hardwood.jpg">
-      <img id="disturb" src="../textures/disturb.jpg">
-      <a-asset-item id="font-json" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
-      
-      <a-mixin id="rolling-scene" >
-        <a-plane
-          position="0 0 0"
-          rotation="-75 0 0"
-          width="2"
-          height="3"
-          material="src: #disturb; repeat: 2 2;">
-        </a-plane>
+    <a-scene mindar-image="imageTargetSrc: ../patterns/rollingstones.patt; autoStart: true;" 
+             color-space="sRGB" renderer="colorManagement: true" embedded
+             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
 
-        <a-entity id="rolling-assembly">
-            <a-animation
-              attribute="position"
-              dur="5000"
-              from="0 0.2 -1.2"
-              to="0 0.2 1.2"
-              repeat="indefinite"
-              easing="ease-in-out-sine">
-            </a-animation>
-        
-          <a-entity id="cylinder" position="0 0.15 0" rotation="90 0 0">
-            <a-cylinder radius="0.15" height="0.4" material="src: #hardwood">
-              <a-animation
-                attribute="rotation"
-                dur="2000"
-                from="90 0 0"
-                to="90 360 0"
-                repeat="indefinite"
-                easing="linear">
-              </a-animation>
-            </a-cylinder>
-          </a-entity>
+      <a-assets>
+        <a-asset-item id="font" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
+        <img id="hardwood" src="../textures/hardwood.jpg" />
+        <img id="disturb" src="../textures/disturb.jpg" />
+      </a-assets>
 
-          <a-entity line="start: 0 0.15 0; end: 0 -0.5 0; color: red;" text="font: #font-json; negate: false; value: mg; color: red; align: center; width: 2.5;" position="0.15 -0.2 0"></a-entity>
-          <a-entity line="start: 0 0.15 0; end: 0.2 0.7 0; color: blue;" rotation="0 0 15" text="font: #font-json; negate: false; value: N; color: blue; align: left; width: 2.5;" position="0.1 0.5 0"></a-entity>
-          <a-entity line="start: 0 0.15 0; end: 0.4 0.05 0; color: green;" rotation="0 0 -75" text="font: #font-json; negate: false; value: F; color: green; align: left; width: 2.5;" position="0.25 0.1 0"></a-entity>
-        </a-entity>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-light type="ambient" color="#888"></a-light>
-        <a-light type="directional" intensity="0.8" position="-1 1 0.5"></a-light>
-      </a-mixin>
-    </a-assets>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- Похила площина -->
+        <a-plane rotation="-30 0 0" width="4" height="2" 
+                 position="0 -0.2 0" 
+                 material="src: #disturb; repeat: 2 2;"></a-plane>
 
-    <a-marker preset="hiro">
-      <a-entity mixin="rolling-scene"></a-entity>
-    </a-marker>
-    
-    <a-marker type="pattern" url="../patterns/rollingstones.patt">
-      <a-entity mixin="rolling-scene"></a-entity>
-    </a-marker>
+        <!-- Циліндр -->
+        <a-cylinder id="cylinder" radius="0.2" height="0.4" rotation="90 0 0"
+                    position="-1 0.5 0" 
+                    material="src: #hardwood;" roll-animation>
+        </a-cylinder>
 
-    <a-entity camera></a-entity>
-  </a-scene>
-</body>
+        <!-- Вектори сил -->
+        <!-- Сила тяжіння -->
+        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.4"
+                  material="color: red" position="-1 0.5 0"
+                  rotation="-90 0 0"></a-entity>
+        <a-text value="mg" font="#font" negate="false" color="red"
+                position="-1 0.2 0.05" width="2"></a-text>
+
+        <!-- Нормальна сила -->
+        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.3"
+                  material="color: blue" position="-1 0.5 0"
+                  rotation="60 0 0"></a-entity>
+        <a-text value="N" font="#font" negate="false" color="blue"
+                position="-0.95 0.65 0.1" width="2"></a-text>
+
+        <!-- Сила тертя -->
+        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.2"
+                  material="color: green" position="-1 0.5 0"
+                  rotation="0 0 90"></a-entity>
+        <a-text value="F_терт" font="#font" negate="false" color="green"
+                position="-1.2 0.5 0.1" width="2"></a-text>
+
+        <!-- Джерело світла -->
+        <a-entity light="type: directional; color: #ffffff; intensity: 0.9" position="1 2 1"></a-entity>
+        <a-entity light="type: ambient; intensity: 0.3"></a-entity>
+      </a-entity>
+    </a-scene>
+  </body>
 </html>
