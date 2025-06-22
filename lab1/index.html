@@ -1,70 +1,184 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Фізика — Циліндр на похилій площині</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { z-index: 0 !important; }
-  </style>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <style>
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .arjs-loader div {
+            text-align: center;
+            font-size: 1.25em;
+            color: white;
+        }
+    </style>
 </head>
-<body>
-  <a-scene physics="gravity: -9.8" embedded>
+<body style="margin: 0; overflow: hidden;">
+    <div class="arjs-loader">
+        <div>Loading, please wait...</div>
+    </div>
 
-    <!-- Завантаження текстур -->
-    <a-assets>
-      <img id="hardwood" src="../textures/hardwood.jpg" crossorigin="anonymous">
-      <img id="disturb" src="../textures/disturb.jpg" crossorigin="anonymous">
-    </a-assets>
+    <a-scene
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; precision: medium;"
+        embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
 
-    <!-- Камера -->
-    <a-entity camera position="0 2 6" look-controls wasd-controls></a-entity>
+        <!-- Assets -->
+        <a-assets>
+            <img id="hardwood" src="../textures/hardwood.jpg">
+            <img id="disturb" src="../textures/disturb.jpg">
+        </a-assets>
 
-    <!-- Похила площина -->
-    <a-box position="0 0 0" rotation="-30 0 0" width="6" height="0.1" depth="4"
-           material="src: #disturb; repeat: 2 2" static-body></a-box>
+        <!-- Rolling Stones Marker -->
+        <a-marker type="pattern" url="../patterns/rollingstones.patt" smooth="true">
+            <!-- Light Source -->
+            <a-light type="point" position="0 5 0" intensity="2" color="#FFF"></a-light>
+            <a-light type="ambient" intensity="0.5" color="#BBB"></a-light>
 
-    <!-- Циліндр (бочка) -->
-    <a-cylinder id="cylinder"
-                position="-2 2 0"
-                radius="0.3"
-                height="0.6"
-                rotation="90 0 0"
-                material="src: #hardwood"
-                dynamic-body="mass: 1; shape: cylinder;">
-    </a-cylinder>
+            <!-- Inclined Plane -->
+            <a-box 
+                id="plane"
+                position="0 0 0" 
+                rotation="-20 0 0"
+                width="4" 
+                height="0.1" 
+                depth="6"
+                material="src: #disturb; repeat: 2 3">
+            </a-box>
 
-    <!-- Вектори сил -->
-    <a-entity id="force-vectors">
-      <!-- Сила тяжіння (mg) -->
-      <a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0; height: 0.5"
-                material="color: red"
-                position="-2 2 0"
-                rotation="-90 0 0"></a-entity>
-      <a-text value="mg" color="red" position="-2 1.5 0.1" width="2"></a-text>
+            <!-- Rolling Cylinder -->
+            <a-cylinder 
+                id="cylinder"
+                position="-1.5 1.2 -2"
+                rotation="0 0 90"
+                radius="0.3" 
+                height="0.8"
+                material="src: #hardwood; repeat: 2 1"
+                animation="property: position; to: 1.5 -0.5 2; dur: 4000; easing: easeInQuad; loop: true"
+                animation__roll="property: rotation; to: 0 0 -630; dur: 4000; easing: linear; loop: true">
+            </a-cylinder>
 
-      <!-- Нормальна сила (N) -->
-      <a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0; height: 0.4"
-                material="color: blue"
-                position="-2 2 0"
-                rotation="60 0 0"></a-entity>
-      <a-text value="N" color="blue" position="-1.9 2.3 0.1" width="2"></a-text>
+            <!-- Force Vectors -->
+            <!-- Gravity (Weight) - Purple arrow pointing down -->
+            <a-entity id="gravity-vector" position="0 0.8 0">
+                <a-cone position="0 -0.4 0" radius-bottom="0.08" radius-top="0" height="0.2" color="purple"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.8" color="purple"></a-cylinder>
+                <a-text value="mg" position="0.3 0 0" scale="0.5 0.5 0.5" color="purple" align="center"></a-text>
+            </a-entity>
 
-      <!-- Сила тертя (F) -->
-      <a-entity geometry="primitive: cone; radiusBottom: 0.05; radiusTop: 0; height: 0.3"
-                material="color: green"
-                position="-2 2 0"
-                rotation="0 0 90"></a-entity>
-      <a-text value="F" color="green" position="-2.3 2 0.1" width="2"></a-text>
-    </a-entity>
+            <!-- Normal Force - Blue arrow perpendicular to plane -->
+            <a-entity id="normal-vector" position="0 0.8 0" rotation="-20 0 0">
+                <a-cone position="0 0.4 0" radius-bottom="0.08" radius-top="0" height="0.2" color="blue"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.8" color="blue"></a-cylinder>
+                <a-text value="N" position="0.3 0 0" scale="0.5 0.5 0.5" color="blue" align="center"></a-text>
+            </a-entity>
 
-    <!-- Освітлення -->
-    <a-entity light="type: directional; intensity: 1" position="3 5 1"></a-entity>
-    <a-entity light="type: ambient; intensity: 0.3"></a-entity>
+            <!-- Friction Force - Red arrow opposing motion -->
+            <a-entity id="friction-vector" position="0 0.8 0" rotation="0 0 20">
+                <a-cone position="-0.3 0 0" radius-bottom="0.08" radius-top="0" height="0.2" rotation="0 0 -90" color="red"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.6" rotation="0 0 90" color="red"></a-cylinder>
+                <a-text value="f" position="0 0.3 0" scale="0.5 0.5 0.5" color="red" align="center"></a-text>
+            </a-entity>
 
-  </a-scene>
+            <!-- Title -->
+            <a-text 
+                value="Rolling Cylinder Physics" 
+                position="0 2.5 0" 
+                scale="1 1 1" 
+                align="center"
+                color="white">
+            </a-text>
+        </a-marker>
+
+        <!-- Hiro Marker (Backup) -->
+        <a-marker preset="hiro" smooth="true">
+            <!-- Same content as above -->
+            <a-light type="point" position="0 5 0" intensity="2" color="#FFF"></a-light>
+            <a-light type="ambient" intensity="0.5" color="#BBB"></a-light>
+
+            <a-box 
+                position="0 0 0" 
+                rotation="-20 0 0"
+                width="4" 
+                height="0.1" 
+                depth="6"
+                material="src: #disturb; repeat: 2 3">
+            </a-box>
+
+            <a-cylinder 
+                position="-1.5 1.2 -2"
+                rotation="0 0 90"
+                radius="0.3" 
+                height="0.8"
+                material="src: #hardwood; repeat: 2 1"
+                animation="property: position; to: 1.5 -0.5 2; dur: 4000; easing: easeInQuad; loop: true"
+                animation__roll="property: rotation; to: 0 0 -630; dur: 4000; easing: linear; loop: true">
+            </a-cylinder>
+
+            <a-entity position="0 0.8 0">
+                <a-cone position="0 -0.4 0" radius-bottom="0.08" radius-top="0" height="0.2" color="purple"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.8" color="purple"></a-cylinder>
+                <a-text value="mg" position="0.3 0 0" scale="0.5 0.5 0.5" color="purple" align="center"></a-text>
+            </a-entity>
+
+            <a-entity position="0 0.8 0" rotation="-20 0 0">
+                <a-cone position="0 0.4 0" radius-bottom="0.08" radius-top="0" height="0.2" color="blue"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.8" color="blue"></a-cylinder>
+                <a-text value="N" position="0.3 0 0" scale="0.5 0.5 0.5" color="blue" align="center"></a-text>
+            </a-entity>
+
+            <a-entity position="0 0.8 0" rotation="0 0 20">
+                <a-cone position="-0.3 0 0" radius-bottom="0.08" radius-top="0" height="0.2" rotation="0 0 -90" color="red"></a-cone>
+                <a-cylinder position="0 0 0" radius="0.02" height="0.6" rotation="0 0 90" color="red"></a-cylinder>
+                <a-text value="f" position="0 0.3 0" scale="0.5 0.5 0.5" color="red" align="center"></a-text>
+            </a-entity>
+
+            <a-text 
+                value="Rolling Cylinder Physics" 
+                position="0 2.5 0" 
+                scale="1 1 1" 
+                align="center"
+                color="white">
+            </a-text>
+        </a-marker>
+
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Hide loader when scene is ready
+        window.addEventListener('arjs-video-loaded', () => {
+            document.querySelector('.arjs-loader').style.display = 'none';
+        });
+
+        // Animate force vectors with the cylinder
+        AFRAME.registerComponent('sync-vectors', {
+            tick: function() {
+                const cylinder = document.querySelector('#cylinder');
+                if (cylinder) {
+                    const pos = cylinder.getAttribute('position');
+                    document.querySelectorAll('#gravity-vector, #normal-vector, #friction-vector').forEach(vec => {
+                        if (vec) {
+                            vec.setAttribute('position', {x: pos.x, y: pos.y + 0.8, z: pos.z});
+                        }
+                    });
+                }
+            }
+        });
+
+        // Apply to scene
+        document.querySelector('a-scene').setAttribute('sync-vectors', '');
+    </script>
 </body>
 </html>
