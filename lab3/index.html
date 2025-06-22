@@ -1,197 +1,545 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta charset="utf-8">
-    <title>WebXR Physics Scene (All-in-One)</title>
-    <style>
-        html, body {
-            margin: 0;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
+    <title>WebXR AR Rolling Cylinder Physics</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.176.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.176.0/examples/jsm/"
         }
-        #ar-button {
+    }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 100;
+            font-size: 14px;
+        }
+        #controls {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
+        }
+        button {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #arButton {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24px;
-            border: 1px solid white;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.4);
-            color: white;
-            font: 16px sans-serif;
-            cursor: pointer;
+            z-index: 999;
+        }
+        .vector-legend {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .vector-item {
+            margin: 3px 0;
+        }
+        .vector-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
-    <div id="container"></div>
+    <div id="info">
+        <div><strong>WebXR AR Rolling Cylinder Physics</strong></div>
+        <div>Desktop: Mouse to rotate, Scroll to zoom</div>
+        <div>AR: Press "START AR" to view in AR</div>
+        <div class="vector-legend">
+            <div class="vector-item"><span class="vector-color" style="background: #0000ff;"></span>Gravity</div>
+            <div class="vector-item"><span class="vector-color" style="background: #00ff00;"></span>Normal Force</div>
+            <div class="vector-item"><span class="vector-color" style="background: #ffff00;"></span>Friction</div>
+            <div class="vector-item"><span class="vector-color" style="background: #ff0000;"></span>Impulse</div>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <button onclick="resetSimulation()">Reset</button>
+        <button onclick="togglePhysics()">Pause/Resume</button>
+        <button onclick="toggleVectors()">Toggle Vectors</button>
+        <button onclick="changeView()">Change View</button>
+        <button onclick="scaleUp()">Scale Up</button>
+        <button onclick="scaleDown()">Scale Down</button>
+    </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
-            }
-        }
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
     <script type="module">
-        // Імпорти тепер працюють прямо тут
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        // Global variables
+        let scene, camera, renderer, world;
+        let sceneGroup, cylinderBody, cylinder;
+        let vectors, showVectors = true;
+        let physicsEnabled = true;
+        let currentView = 0;
+        let isInAR = false;
+        
+        const clock = new THREE.Clock();
+        const cameraPositions = [
+            { pos: [15, 10, 15], look: [0, 2, 0] },
+            { pos: [0, 20, 0], look: [0, 0, 0] },
+            { pos: [25, 5, 0], look: [0, 2, 0] },
+            { pos: [0, 10, 25], look: [0, 2, 0] }
+        ];
+
+        initialize();
+
+        function initialize() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(
+                70,
+                window.innerWidth / window.innerHeight,
+                0.01,
+                200
+            );
+            camera.position.set(15, 10, 15);
+            camera.lookAt(0, 2, 0);
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true
+            });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             renderer.xr.enabled = true;
-            document.querySelector("#container").appendChild(renderer.domElement);
-
-            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
-            light.position.set(0.5, 1, 0.25);
-            scene.add(light);
-
-            const world = new CANNON.World({
-                gravity: new CANNON.Vec3(0, -9.82, 0),
+            document.body.appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Create main scene group for scaling in AR
+            sceneGroup = new THREE.Group();
+            sceneGroup.scale.set(0.1, 0.1, 0.1);
+            scene.add(sceneGroup);
+            
+            // Setup physics
+            setupPhysics();
+            
+            // Create scene objects
+            createScene();
+            
+            // Create force vectors
+            createForceVectors();
+            
+            // Add AR button
+            const arButton = ARButton.createButton(renderer, {
+                requiredFeatures: ['hit-test'],
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.body }
             });
-            const objectsToUpdate = [];
+            arButton.id = 'arButton';
+            document.body.appendChild(arButton);
+            
+            // WebXR event handlers
+            renderer.xr.addEventListener('sessionstart', onXRSessionStart);
+            renderer.xr.addEventListener('sessionend', onXRSessionEnd);
+            
+            // Mouse controls for desktop
+            setupMouseControls();
+            
+            // Window resize handler
+            window.addEventListener('resize', onWindowResize);
+            
+            // Animation loop
+            renderer.setAnimationLoop(animate);
+        }
 
-            const contentGroup = new THREE.Group();
-            contentGroup.visible = false;
+        function setupPhysics() {
+            // Physics world
+            world = new CANNON.World();
+            world.gravity.set(0, -9.82, 0);
+            world.broadphase = new CANNON.NaiveBroadphase();
+            world.solver.iterations = 10;
+            
+            // Materials
+            const groundMaterial = new CANNON.Material('ground');
+            const cylinderMaterial = new CANNON.Material('cylinder');
+            
+            const contactMaterial = new CANNON.ContactMaterial(
+                groundMaterial, 
+                cylinderMaterial, 
+                {
+                    friction: 0.4,
+                    restitution: 0.1
+                }
+            );
+            world.addContactMaterial(contactMaterial);
+        }
 
-            const floorGeometry = new THREE.PlaneGeometry(20, 20);
-            const floorMaterial = new THREE.MeshStandardMaterial({ color: "#7BC8A4", transparent: true, opacity: 0.5 });
-            const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-            floorMesh.rotation.x = -Math.PI / 2;
-            contentGroup.add(floorMesh);
-
-            const floorShape = new CANNON.Plane();
-            const floorBody = new CANNON.Body({ mass: 0 });
+        function createScene() {
+            // Ground floor
+            const floorGeometry = new THREE.PlaneGeometry(30, 30);
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x7BC8A4,
+                side: THREE.DoubleSide 
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -2;
+            floor.receiveShadow = true;
+            sceneGroup.add(floor);
+            
+            // Floor physics
+            const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
+            const floorBody = new CANNON.Body({
+                mass: 0,
+                position: new CANNON.Vec3(0, -2, 0)
+            });
             floorBody.addShape(floorShape);
             floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-            world.addBody(floorBody);
-
-            const inclinedPlaneGeometry = new THREE.PlaneGeometry(5, 7);
-            const inclinedPlaneMaterial = new THREE.MeshStandardMaterial({ color: "#7BC224", transparent: true, opacity: 0.5 });
-            const inclinedPlaneMesh = new THREE.Mesh(inclinedPlaneGeometry, inclinedPlaneMaterial);
-            inclinedPlaneMesh.position.set(0, 1.5, -2);
-            inclinedPlaneMesh.rotation.x = -Math.PI / 3;
-            contentGroup.add(inclinedPlaneMesh);
-
-            const inclinedPlaneShape = new CANNON.Plane();
-            const inclinedPlaneBody = new CANNON.Body({ mass: 0 });
-            inclinedPlaneBody.addShape(inclinedPlaneShape);
-            inclinedPlaneBody.position.copy(inclinedPlaneMesh.position);
-            inclinedPlaneBody.quaternion.copy(inclinedPlaneMesh.quaternion);
-            world.addBody(inclinedPlaneBody);
-
-            const cylinderGeometry = new THREE.CylinderGeometry(0.25, 0.25, 1, 32);
-            const cylinderMaterial = new THREE.MeshStandardMaterial({ color: "red" });
-            const cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
-            const cylinderInitialPosition = new THREE.Vector3(0, 3.5, -3.5);
-            cylinderMesh.position.copy(cylinderInitialPosition);
-            cylinderMesh.rotation.z = Math.PI / 2;
-            contentGroup.add(cylinderMesh);
-
-            const cylinderShape = new CANNON.Cylinder(0.25, 0.25, 1, 16);
-            const cylinderBody = new CANNON.Body({
-                mass: 10,
-                shape: cylinderShape,
-                position: new CANNON.Vec3().copy(cylinderInitialPosition),
-            });
-            cylinderBody.quaternion.copy(cylinderMesh.quaternion);
-            world.addBody(cylinderBody);
-            objectsToUpdate.push({ mesh: cylinderMesh, body: cylinderBody });
+            world.add(floorBody);
             
-            scene.add(contentGroup);
+            // Inclined plane
+            const inclineAngle = Math.PI / 4;
+            const inclineLength = 15;
+            const inclineWidth = 8;
+            
+            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
+            const planeMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x7BC224 
+            });
+            const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            inclinedPlane.position.set(0, 3, 0);
+            inclinedPlane.rotation.x = -inclineAngle;
+            inclinedPlane.receiveShadow = true;
+            inclinedPlane.castShadow = true;
+            sceneGroup.add(inclinedPlane);
+            
+            // Incline physics
+            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
+            const planeBody = new CANNON.Body({
+                mass: 0,
+                position: new CANNON.Vec3(0, 3, 0)
+            });
+            planeBody.addShape(planeShape);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
+            world.add(planeBody);
+            
+            // Cylinder
+            const cylinderRadius = 0.5;
+            const cylinderHeight = 2;
+            const cylinderGeometry = new THREE.CylinderGeometry(
+                cylinderRadius, 
+                cylinderRadius, 
+                cylinderHeight, 
+                32
+            );
+            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ 
+                color: 0xff0000 
+            });
+            cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
+            cylinder.castShadow = true;
+            cylinder.receiveShadow = true;
+            sceneGroup.add(cylinder);
+            
+            // Cylinder physics
+            const cylinderShape = new CANNON.Cylinder(
+                cylinderRadius, 
+                cylinderRadius, 
+                cylinderHeight, 
+                12
+            );
+            cylinderBody = new CANNON.Body({
+                mass: 5,
+                position: new CANNON.Vec3(0, 7, -4)
+            });
+            
+            const quaternion = new CANNON.Quaternion();
+            quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
+            world.add(cylinderBody);
+            
+            resetSimulation();
+        }
 
-            let hitTestSource = null;
-            let hitTestSourceRequested = false;
-            let isScenePlaced = false;
+        function createForceVectors() {
+            vectors = {
+                gravity: createVector(0x0000ff, 'Gravity'),
+                normal: createVector(0x00ff00, 'Normal'),
+                friction: createVector(0xffff00, 'Friction'),
+                impulse: createVector(0xff0000, 'Impulse')
+            };
+        }
 
-            const button = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-            button.id = 'ar-button';
-            document.body.appendChild(button);
+        function createVector(color) {
+            const group = new THREE.Group();
+            
+            // Arrow cone
+            const arrowGeometry = new THREE.ConeGeometry(0.15, 0.4, 8);
+            const arrowMaterial = new THREE.MeshBasicMaterial({ color });
+            const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            
+            // Line
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                color, 
+                linewidth: 3 
+            });
+            const lineGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(6);
+            lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            
+            group.add(arrow);
+            group.add(line);
+            sceneGroup.add(group);
+            
+            return { group, arrow, line };
+        }
 
-            const controller = renderer.xr.getController(0);
-            controller.addEventListener('select', onSelect);
-            scene.add(controller);
-
-            function onSelect() {
-                if (contentGroup.visible) return;
-                if (reticle.visible) {
-                    contentGroup.position.setFromMatrixPosition(reticle.matrix);
-                    
-                    // Оновлюємо позиції фізичних тіл відносно позиції групи
-                    floorBody.position.copy(floorMesh.position).add(contentGroup.position);
-                    inclinedPlaneBody.position.copy(inclinedPlaneMesh.position).add(contentGroup.position);
-                    cylinderBody.position.copy(cylinderMesh.position).add(contentGroup.position);
-
-                    contentGroup.visible = true;
-                    isScenePlaced = true;
+        function updateForceVectors() {
+            if (!showVectors) {
+                Object.values(vectors).forEach(v => v.group.visible = false);
+                return;
+            }
+            
+            const pos = cylinder.position.clone();
+            const velocity = cylinderBody.velocity;
+            const mass = cylinderBody.mass;
+            const g = 9.82;
+            
+            // Gravity
+            const gravityMagnitude = mass * g * 0.1;
+            updateVector(vectors.gravity, pos, new THREE.Vector3(0, -gravityMagnitude, 0));
+            
+            // Check contacts
+            let hasContact = false;
+            for (let contact of world.contacts) {
+                if (contact.bi === cylinderBody || contact.bj === cylinderBody) {
+                    hasContact = true;
+                    break;
                 }
             }
+            
+            // Normal force
+            if (hasContact) {
+                const normalMagnitude = mass * g * 0.1 * Math.cos(Math.PI / 4);
+                const normalDir = new THREE.Vector3(0, normalMagnitude, 0);
+                normalDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 4);
+                updateVector(vectors.normal, pos, normalDir);
+            } else {
+                vectors.normal.group.visible = false;
+            }
+            
+            // Friction
+            const velocityLength = velocity.length();
+            if (velocityLength > 0.1 && hasContact) {
+                const frictionDir = new THREE.Vector3(-velocity.x, -velocity.y, -velocity.z)
+                    .normalize()
+                    .multiplyScalar(0.5);
+                updateVector(vectors.friction, pos, frictionDir);
+            } else {
+                vectors.friction.group.visible = false;
+            }
+            
+            // Impulse
+            if (cylinderBody.position.y > 6 && velocity.z > 0.5) {
+                updateVector(vectors.impulse, pos, new THREE.Vector3(0, 0, 1));
+            } else {
+                vectors.impulse.group.visible = false;
+            }
+        }
 
-            const reticle = new THREE.Mesh(
-                new THREE.RingGeometry(0.05, 0.07, 32).rotateX(-Math.PI / 2),
-                new THREE.MeshBasicMaterial()
+        function updateVector(vector, start, direction) {
+            vector.group.visible = true;
+            
+            const positions = vector.line.geometry.attributes.position.array;
+            positions[0] = start.x;
+            positions[1] = start.y;
+            positions[2] = start.z;
+            positions[3] = start.x + direction.x;
+            positions[4] = start.y + direction.y;
+            positions[5] = start.z + direction.z;
+            vector.line.geometry.attributes.position.needsUpdate = true;
+            
+            vector.arrow.position.set(
+                start.x + direction.x,
+                start.y + direction.y,
+                start.z + direction.z
             );
-            reticle.matrixAutoUpdate = false;
-            reticle.visible = false;
-            scene.add(reticle);
+            
+            if (direction.length() > 0) {
+                vector.arrow.lookAt(
+                    start.x + direction.x * 2,
+                    start.y + direction.y * 2,
+                    start.z + direction.z * 2
+                );
+            }
+        }
 
-            const clock = new THREE.Clock();
-
-            renderer.setAnimationLoop((timestamp, frame) => {
-                if (frame) {
-                    if (!hitTestSourceRequested) {
-                        const session = renderer.xr.getSession();
-                        session.requestReferenceSpace('viewer').then((referenceSpace) => {
-                            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
-                                hitTestSource = source;
-                            });
-                        });
-                        hitTestSourceRequested = true;
-                        session.addEventListener('end', () => {
-                            hitTestSourceRequested = false;
-                            hitTestSource = null;
-                        });
-                    }
-
-                    if (hitTestSource) {
-                        const hitTestResults = frame.getHitTestResults(hitTestSource);
-                        if (hitTestResults.length > 0) {
-                            const hit = hitTestResults[0];
-                            reticle.visible = true;
-                            const pose = hit.getPose(renderer.xr.getReferenceSpace());
-                            reticle.matrix.fromArray(pose.transform.matrix);
-                        } else {
-                            reticle.visible = false;
-                        }
-                    }
+        function setupMouseControls() {
+            let mouseX = 0, mouseY = 0;
+            let targetX = 0, targetY = 0;
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+            
+            document.addEventListener('mousemove', (event) => {
+                if (!isInAR) {
+                    mouseX = (event.clientX - windowHalfX) / windowHalfX;
+                    mouseY = (event.clientY - windowHalfY) / windowHalfY;
                 }
-
-                if (isScenePlaced) {
-                    const deltaTime = clock.getDelta();
-                    world.step(1 / 60, deltaTime, 3);
-                    for (const object of objectsToUpdate) {
-                        // Тепер копіюємо позицію з фізичного тіла назад у сітку,
-                        // але віднімаємо позицію групи, щоб отримати локальні координати
-                        object.mesh.position.copy(object.body.position).sub(contentGroup.position);
-                        object.mesh.quaternion.copy(object.body.quaternion);
-                    }
-                }
-                
-                renderer.render(scene, camera);
             });
-        });
+            
+            document.addEventListener('wheel', (event) => {
+                if (!isInAR) {
+                    camera.position.multiplyScalar(1 + event.deltaY * 0.001);
+                    camera.position.clampLength(5, 50);
+                }
+            });
+            
+            // Update camera in animate loop
+            window.updateDesktopCamera = function() {
+                if (!isInAR) {
+                    targetX += (mouseX - targetX) * 0.05;
+                    targetY += (mouseY - targetY) * 0.05;
+                    
+                    const radius = camera.position.length();
+                    camera.position.x = Math.sin(targetX * Math.PI) * radius;
+                    camera.position.y = Math.max(5, 10 + targetY * 5);
+                    camera.position.z = Math.cos(targetX * Math.PI) * radius;
+                    camera.lookAt(0, 2, 0);
+                }
+            };
+        }
+
+        function onXRSessionStart() {
+            isInAR = true;
+            document.getElementById('info').style.display = 'none';
+            console.log('AR session started');
+        }
+
+        function onXRSessionEnd() {
+            isInAR = false;
+            document.getElementById('info').style.display = 'block';
+            console.log('AR session ended');
+        }
+
+        function animate() {
+            const deltaTime = Math.min(clock.getDelta(), 0.1);
+            
+            if (physicsEnabled) {
+                world.step(deltaTime);
+                
+                // Update cylinder
+                cylinder.position.copy(cylinderBody.position);
+                cylinder.quaternion.copy(cylinderBody.quaternion);
+                
+                // Update vectors
+                updateForceVectors();
+            }
+            
+            // Update camera for desktop
+            if (window.updateDesktopCamera) {
+                window.updateDesktopCamera();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Global control functions
+        window.resetSimulation = function() {
+            cylinderBody.position.set(0, 7, -4);
+            cylinderBody.velocity.set(0, 0, 0);
+            cylinderBody.angularVelocity.set(0, 0, 0);
+            cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+            
+            // Apply impulse
+            const impulse = new CANNON.Vec3(0, 0, 3);
+            const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
+            cylinderBody.applyImpulse(impulse, worldPoint);
+        };
+
+        window.togglePhysics = function() {
+            physicsEnabled = !physicsEnabled;
+        };
+
+        window.toggleVectors = function() {
+            showVectors = !showVectors;
+        };
+
+        window.changeView = function() {
+            if (!isInAR) {
+                currentView = (currentView + 1) % cameraPositions.length;
+                const view = cameraPositions[currentView];
+                camera.position.set(...view.pos);
+                camera.lookAt(...view.look);
+            }
+        };
+
+        window.scaleUp = function() {
+            const currentScale = sceneGroup.scale.x;
+            const newScale = Math.min(currentScale * 1.2, 1.0);
+            sceneGroup.scale.set(newScale, newScale, newScale);
+        };
+
+        window.scaleDown = function() {
+            const currentScale = sceneGroup.scale.x;
+            const newScale = Math.max(currentScale * 0.8, 0.01);
+            sceneGroup.scale.set(newScale, newScale, newScale);
+        };
     </script>
 </body>
 </html>
