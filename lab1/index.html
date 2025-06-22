@@ -2,87 +2,71 @@
   <head>
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe/mindar-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-physics-system@4.0.1/dist/aframe-physics-system.min.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden">
-    <script>
-      AFRAME.registerComponent("roll-animation", {
-        init: function () {
-          this.startTime = null;
-          this.resetInterval = 5000; // 5 секунд
-          this.reset();
-        },
-        reset: function () {
-          const el = this.el;
-          el.setAttribute("position", "-1 0.5 0");
-          el.object3D.rotation.set(0, 0, 0);
-          this.startTime = null;
-        },
-        tick: function (time, timeDelta) {
-          if (!this.startTime) this.startTime = time;
-          const elapsed = time - this.startTime;
-
-          const el = this.el;
-          const pos = el.object3D.position;
-          const rot = el.object3D.rotation;
-
-          if (elapsed < this.resetInterval) {
-            // Рух по похилій
-            pos.x += 0.0006 * timeDelta; // повільніше
-            pos.y -= 0.0003 * timeDelta;
-            rot.z += 0.001 * timeDelta;
-          } else {
-            this.reset();
-          }
-        },
-      });
-    </script>
-
-    <a-scene mindar-image="imageTargetSrc: ../patterns/rollingstones.patt; autoStart: true;" 
-             color-space="sRGB" renderer="colorManagement: true" embedded
-             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: true">
-
+    <a-scene
+      mindar-image="imageTargetSrc: ../patterns/rollingstones.patt; autoStart: true;"
+      embedded
+      renderer="colorManagement: true; physicallyCorrectLights: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
+      physics="gravity: -9.8"
+    >
       <a-assets>
         <a-asset-item id="font" src="../fonts/volja-regular_w-msdf.json"></a-asset-item>
         <img id="hardwood" src="../textures/hardwood.jpg" />
         <img id="disturb" src="../textures/disturb.jpg" />
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: true" wasd-controls="enabled: false"></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Похила площина -->
-        <a-plane rotation="-30 0 0" width="4" height="2" 
-                 position="0 -0.2 0" 
-                 material="src: #disturb; repeat: 2 2;"></a-plane>
+      <a-entity id="main-target" mindar-image-target="targetIndex: 0">
 
-        <!-- Циліндр -->
-        <a-cylinder id="cylinder" radius="0.2" height="0.4" rotation="90 0 0"
-                    position="-1 0.5 0" 
-                    material="src: #hardwood;" roll-animation>
-        </a-cylinder>
+        <!-- Контейнер сцени -->
+        <a-entity id="scene-root" position="0 0 0">
 
-        <!-- Вектори сил -->
-        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.4"
-                  material="color: red" position="-1 0.5 0"
-                  rotation="-90 0 0"></a-entity>
-        <a-text value="mg" font="#font" negate="false" color="red"
-                position="-1 0.2 0.05" width="2"></a-text>
+          <!-- Похила площина з фізикою -->
+          <a-box rotation="-30 0 0" position="0 -0.3 0" width="4" height="0.1" depth="2"
+                 material="src: #disturb; repeat: 2 2"
+                 static-body></a-box>
 
-        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.3"
-                  material="color: blue" position="-1 0.5 0"
-                  rotation="60 0 0"></a-entity>
-        <a-text value="N" font="#font" negate="false" color="blue"
-                position="-0.95 0.65 0.1" width="2"></a-text>
+          <!-- Циліндр з фізикою -->
+          <a-cylinder id="barrel" radius="0.2" height="0.4"
+                      position="-1 0.8 0" 
+                      rotation="90 0 0"
+                      material="src: #hardwood;"
+                      dynamic-body="mass: 1; shape: cylinder;"></a-cylinder>
 
-        <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.2"
-                  material="color: green" position="-1 0.5 0"
-                  rotation="0 0 90"></a-entity>
-        <a-text value="F_терт" font="#font" negate="false" color="green"
-                position="-1.2 0.5 0.1" width="2"></a-text>
+          <!-- Вектори сил (умовні, не динамічні) -->
+          <a-entity id="forces">
+            <!-- Вектор ваги -->
+            <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.3"
+                      material="color: red" position="-1 0.8 0"
+                      rotation="-90 0 0"></a-entity>
+            <a-text value="mg" font="#font" negate="false" color="red"
+                    position="-1 0.5 0.05" width="2"></a-text>
 
-        <!-- Освітлення -->
-        <a-entity light="type: directional; color: #ffffff; intensity: 0.9" position="1 2 1"></a-entity>
-        <a-entity light="type: ambient; intensity: 0.3"></a-entity>
+            <!-- Нормальна сила -->
+            <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.25"
+                      material="color: blue" position="-1 0.8 0"
+                      rotation="60 0 0"></a-entity>
+            <a-text value="N" font="#font" negate="false" color="blue"
+                    position="-0.95 1 0.1" width="2"></a-text>
+
+            <!-- Тертя -->
+            <a-entity geometry="primitive: cone; radiusBottom: 0.02; radiusTop: 0; height: 0.2"
+                      material="color: green" position="-1 0.8 0"
+                      rotation="0 0 90"></a-entity>
+            <a-text value="F" font="#font" negate="false" color="green"
+                    position="-1.2 0.8 0.1" width="2"></a-text>
+          </a-entity>
+
+          <!-- Освітлення -->
+          <a-entity light="type: directional; color: #ffffff; intensity: 0.9"
+                    position="1 2 1"></a-entity>
+          <a-entity light="type: ambient; intensity: 0.4"></a-entity>
+        </a-entity>
       </a-entity>
     </a-scene>
   </body>
