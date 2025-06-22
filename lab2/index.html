@@ -1,124 +1,189 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Лабораторні роботи</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1a0000;
-      color: #f2f2f2;
-      overflow-x: hidden;
-    }
-
-    header {
-      background-color: #330000;
-      padding: 20px;
-      text-align: center;
-      color: #ffcccc;
-      font-size: 2em;
-      border-bottom: 2px solid #990000;
-      box-shadow: 0 0 15px #660000;
-    }
-
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 40px 20px;
-      gap: 20px;
-    }
-
-    section {
-      background-color: #260000;
-      border: 2px solid #990000;
-      border-radius: 16px;
-      padding: 24px;
-      width: 320px;
-      box-shadow: 0 0 20px rgba(153, 0, 0, 0.5);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    section:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 30px rgba(255, 0, 0, 0.6);
-    }
-
-    h2 {
-      color: #ff6666;
-      text-align: center;
-      border-bottom: 1px solid #990000;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    a {
-      display: inline-block;
-      width: 100%;
-      padding: 10px 15px;
-      background-color: #330000;
-      color: #ff9999;
-      text-decoration: none;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
-    }
-
-    a:hover {
-      transform: scale(1.07);
-      color: #ffffff;
-      background-color: #660000;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
-    }
-  </style>
+  <meta charset="utf-8">
+  <title>AR Rolling Cylinder with CANNON Physics</title>
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.3/dist/aframe-physics-system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
 </head>
 <body>
-  <header>
-    Лабораторні роботи
-  </header>
+  <a-scene mindar-image="imageTargetSrc: ./rolling.mind;" physics="debug: true" renderer="colorManagement: true;">
 
-  <main>
-    <section>
-      <h2>Тижні</h2>
-      <ul>
-        <li><a href="week1/index.html">Week 1</a></li>
-        <li><a href="week2/index.html">Week 2</a></li>
-        <li><a href="week3/index.html">Week 3</a></li>
-        <li><a href="week4/index.html">Week 4</a></li>
-        <li><a href="week5/index.html">Week 5</a></li>
-        <li><a href="week6/index.html">Week 6</a></li>
-        <li><a href="week7/index.html">Week 7</a></li>
-        <li><a href="week8/index.html">Week 8</a></li>
-        <li><a href="week9/index.html">Week 9</a></li>
-        <li><a href="week10/index.html">Week 10</a></li>
-        <li><a href="week11/index.html">Week 11</a></li>
-        <li><a href="week12/index.html">Week 12</a></li>
-        <li><a href="week13/index.html">Week 13</a></li>
-        <li><a href="week14/index.html">Week 14</a></li>
-      </ul>
-    </section>
+    <!-- AR Camera -->
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    
+    <!-- AR Content -->
+    <a-entity id="ar-content" position="0 0 0" scale="0.08 0.08 0.08" visible="false">
+      <!-- Підлога -->
+      <a-plane static-body 
+               position="0 0 0" 
+               rotation="-90 0 0" 
+               width="20" 
+               height="20" 
+               color="#7BC8A4">
+      </a-plane>
+      <!-- Похилена площина -->
+      <a-plane static-body 
+               position="0 5 0" 
+               rotation="-45 0 0" 
+               width="10" 
+               height="80" 
+               color="#7BC224">
+      </a-plane>
+      <!-- Динамічний циліндр -->
+      <a-cylinder 
+        id="rollingCylinder"
+        position="0 35 -10"
+        radius="0.5"
+        height="2"
+        color="red"
+        rotation="0 0 90"
+        dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
+      </a-cylinder>
 
-    <section>
-      <h2>Лабораторні</h2>
-      <ul>
-        <li><a href="lab1/index.html">Лабораторна 1</a></li>
-        <li><a href="lab2/index.html">Лабораторна 2</a></li>
-        <li><a href="lab3/index.html">Лабораторна 3</a></li>
-      </ul>
-    </section>
-  </main>
+      <!-- Вектори сил -->
+      <a-entity id="gravityVector" line="start: 0 0 0; end: 0 -2 0; color: blue" visible="false"></a-entity>
+      <a-cone id="gravityArrow" position="0 -2 0" radius-bottom="0.1" radius-top="0" height="0.3" color="blue" visible="false"></a-cone>
+      <a-text id="gravityLabel" value="Gravity" position="0 -2.5 0" align="center" color="blue" scale="0.5 0.5 0.5" visible="false"></a-text>
+      
+      <a-entity id="normalVector" line="start: 0 0 0; end: 0 0 0; color: green" visible="false"></a-entity>
+      <a-cone id="normalArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="green" visible="false"></a-cone>
+      <a-text id="normalLabel" value="Normal" position="0 0 0" align="center" color="green" scale="0.5 0.5 0.5" visible="false"></a-text>
+      
+      <a-entity id="frictionVector" line="start: 0 0 0; end: 0 0 0; color: yellow" visible="false"></a-entity>
+      <a-cone id="frictionArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="yellow" visible="false"></a-cone>
+      <a-text id="frictionLabel" value="Friction" position="0 0 0" align="center" color="yellow" scale="0.5 0.5 0.5" visible="false"></a-text>
+      
+      <a-entity id="impulseVector" line="start: 0 0 0; end: 0 0 0; color: red" visible="false"></a-entity>
+      <a-cone id="impulseArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="red" visible="false"></a-cone>
+      <a-text id="impulseLabel" value="Impulse" position="0 0 0" align="center" color="red" scale="0.5 0.5 0.5" visible="false"></a-text>
+    </a-entity>
+
+    <script>
+      // Додаємо імпульс після завантаження тіла
+      AFRAME.registerComponent('apply-impulse-on-start', {
+        init: function () {
+          this.el.addEventListener('body-loaded', () => {
+            const el = this.el;
+            const impulse = new CANNON.Vec3(0, 0, 5); // Напрямок штовхання
+            const worldPoint = new CANNON.Vec3().copy(el.object3D.position); // Місце застосування
+            el.body.applyImpulse(impulse, worldPoint);
+          });
+        }
+      });
+
+      // Компонент для відображення векторів сил
+      AFRAME.registerComponent('force-vectors', {
+        init: function () {
+          this.cylinder = document.querySelector('#rollingCylinder');
+          this.gravityVector = document.querySelector('#gravityVector');
+          this.gravityArrow = document.querySelector('#gravityArrow');
+          this.gravityLabel = document.querySelector('#gravityLabel');
+          this.normalVector = document.querySelector('#normalVector');
+          this.normalArrow = document.querySelector('#normalArrow');
+          this.normalLabel = document.querySelector('#normalLabel');
+          this.frictionVector = document.querySelector('#frictionVector');
+          this.frictionArrow = document.querySelector('#frictionArrow');
+          this.frictionLabel = document.querySelector('#frictionLabel');
+          this.impulseVector = document.querySelector('#impulseVector');
+          this.impulseArrow = document.querySelector('#impulseArrow');
+          this.impulseLabel = document.querySelector('#impulseLabel');
+          
+          this.cylinder.addEventListener('body-loaded', () => {
+            this.gravityVector.setAttribute('visible', true);
+            this.gravityArrow.setAttribute('visible', true);
+            this.gravityLabel.setAttribute('visible', true);
+            this.normalVector.setAttribute('visible', true);
+            this.normalArrow.setAttribute('visible', true);
+            this.normalLabel.setAttribute('visible', true);
+            this.frictionVector.setAttribute('visible', true);
+            this.frictionArrow.setAttribute('visible', true);
+            this.frictionLabel.setAttribute('visible', true);
+            this.impulseVector.setAttribute('visible', true);
+            this.impulseArrow.setAttribute('visible', true);
+            this.impulseLabel.setAttribute('visible', true);
+          });
+        },
+        
+        tick: function () {
+          if (!this.cylinder.body) return;
+          
+          const pos = this.cylinder.getAttribute('position');
+          const body = this.cylinder.body;
+          const mass = body.mass;
+          const g = 9.82;
+          
+          // Гравітація
+          const gravityEnd = {x: pos.x, y: pos.y - mass * g * 0.1, z: pos.z};
+          this.gravityVector.setAttribute('line', {
+            start: `${pos.x} ${pos.y} ${pos.z}`,
+            end: `${gravityEnd.x} ${gravityEnd.y} ${gravityEnd.z}`
+          });
+          this.gravityArrow.setAttribute('position', gravityEnd);
+          this.gravityLabel.setAttribute('position', `${gravityEnd.x} ${gravityEnd.y - 0.5} ${gravityEnd.z}`);
+          
+          // Нормальна сила
+          if (pos.y <= 0.5) {
+            const normalEnd = {x: pos.x, y: pos.y + mass * g * 0.1, z: pos.z};
+            this.normalVector.setAttribute('line', {
+              start: `${pos.x} ${pos.y} ${pos.z}`,
+              end: `${normalEnd.x} ${normalEnd.y} ${normalEnd.z}`
+            });
+            this.normalArrow.setAttribute('position', normalEnd);
+            this.normalArrow.setAttribute('rotation', '180 0 0');
+            this.normalLabel.setAttribute('position', `${normalEnd.x} ${normalEnd.y + 0.5} ${normalEnd.z}`);
+          }
+          
+          // Сила тертя
+          const velocity = body.velocity;
+          if (velocity.length() > 0.1) {
+            const frictionDirX = -velocity.x * 0.5 / velocity.length();
+            const frictionDirY = -velocity.y * 0.5 / velocity.length();
+            const frictionDirZ = -velocity.z * 0.5 / velocity.length();
+            const frictionEnd = {x: pos.x + frictionDirX, y: pos.y + frictionDirY, z: pos.z + frictionDirZ};
+            this.frictionVector.setAttribute('line', {
+              start: `${pos.x} ${pos.y} ${pos.z}`,
+              end: `${frictionEnd.x} ${frictionEnd.y} ${frictionEnd.z}`
+            });
+            this.frictionArrow.setAttribute('position', frictionEnd);
+            const angle = Math.atan2(frictionDirX, -frictionDirZ) * 180 / Math.PI;
+            this.frictionArrow.setAttribute('rotation', `0 ${angle} 90`);
+            this.frictionLabel.setAttribute('position', `${frictionEnd.x} ${frictionEnd.y + 0.5} ${frictionEnd.z}`);
+          }
+          
+          // Імпульс
+          if (body.velocity.z > 0.1) {
+            const impulseEnd = {x: pos.x, y: pos.y, z: pos.z + 1};
+            this.impulseVector.setAttribute('line', {
+              start: `${pos.x} ${pos.y} ${pos.z}`,
+              end: `${impulseEnd.x} ${impulseEnd.y} ${impulseEnd.z}`
+            });
+            this.impulseArrow.setAttribute('position', impulseEnd);
+            this.impulseArrow.setAttribute('rotation', '90 0 0');
+            this.impulseLabel.setAttribute('position', `${impulseEnd.x} ${impulseEnd.y + 0.5} ${impulseEnd.z}`);
+          }
+        }
+      });
+
+      // Додаємо компонент до циліндра
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('#rollingCylinder').setAttribute('apply-impulse-on-start', '');
+        document.querySelector('a-scene').setAttribute('force-vectors', '');
+      });
+
+      // MindAR tracking events
+      const sceneEl = document.querySelector('a-scene');
+      sceneEl.addEventListener('targetFound', event => {
+        console.log("Target found");
+        document.querySelector('#ar-content').setAttribute('visible', 'true');
+      });
+      
+      sceneEl.addEventListener('targetLost', event => {
+        console.log("Target lost");
+        document.querySelector('#ar-content').setAttribute('visible', 'false');
+      });
+    </script>
+  </a-scene>
 </body>
 </html>
