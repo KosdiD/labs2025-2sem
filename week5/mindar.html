@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar System with MindAR (Debug Mode)</title>
+    <title>Solar System with MindAR (Fixed)</title>
     <!-- Підключаємо A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- Підключаємо MindAR для A-Frame -->
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mind-ar-aframe.prod.js"></script>
+    <!-- ЗМІНА: Повернення до стабільної версії MindAR -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mind-ar-aframe.prod.js"></script>
     <style>
         .loader {
             position: absolute;
@@ -30,32 +30,29 @@
         <div>Loading AR Solar System... Point camera at the marker.</div>
     </div>
 
-    <!-- 
-      Сцена налаштована для MindAR.
-      Переконайтеся, що шлях до 'imageTargetSrc' правильний відносно вашого сервера.
-    -->
+    <!-- ЗМІНА: Виправлено налаштування рендерера для сумісності -->
     <a-scene mindar-image="imageTargetSrc: ../patterns/target.mind; uiLoading: no; uiScanning: no;" 
              color-space="sRGB" 
-             renderer="colorManagement: true, physicallyCorrectLights" 
+             renderer="colorManagement: true, logDepthBuffer: true;" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <!-- Використовуємо URL-адреси для надійності завантаження текстур -->
-            <img id="sun" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/sun.jpg">
-            <img id="mercury" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mercury.jpg">
-            <img id="venus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/venus.jpg">
-            <img id="earth" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/earth.jpg">
-            <img id="mars" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mars.jpg">
-            <img id="jupiter" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/jupiter.jpg">
-            <img id="saturn" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/saturn.jpg">
-            <img id="uranus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/uranus.jpg">
-            <img id="neptune" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/neptune.jpg">
+            <!-- ЗМІНА: Додано атрибут crossorigin="anonymous" для всіх текстур -->
+            <img id="sun" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/sun.jpg" crossorigin="anonymous">
+            <img id="mercury" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mercury.jpg" crossorigin="anonymous">
+            <img id="venus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/venus.jpg" crossorigin="anonymous">
+            <img id="earth" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/earth.jpg" crossorigin="anonymous">
+            <img id="mars" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mars.jpg" crossorigin="anonymous">
+            <img id="jupiter" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/jupiter.jpg" crossorigin="anonymous">
+            <img id="saturn" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/saturn.jpg" crossorigin="anonymous">
+            <img id="uranus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/uranus.jpg" crossorigin="anonymous">
+            <img id="neptune" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/neptune.jpg" crossorigin="anonymous">
         </a-assets>
 
         <!-- Камера, якою керує MindAR -->
         <a-camera position="0 0 0" look-controls="enabled: false">
-            <!-- ДІАГНОСТИЧНИЙ КУБ: Якщо ви бачите цей куб, A-Frame працює. -->
+            <!-- Діагностичний куб залишено для перевірки -->
             <a-box color="red" scale="0.05 0.05 0.05" position="0 -0.25 -0.5" visible="true"></a-box>
         </a-camera>
 
@@ -96,7 +93,6 @@
                 <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear;">
                     <a-entity position="4.5 0 0">
                         <a-sphere src="#saturn" radius="0.35"></a-sphere>
-                        <!-- СПРОЩЕНО: Кільця Сатурна для надійності -->
                         <a-torus color="#8A7D60" radius="0.55" radius-tubular="0.05" rotation="90 0 0"></a-torus>
                     </a-entity>
                 </a-entity>
@@ -120,14 +116,12 @@
             const loader = document.querySelector('.loader');
             const target = document.querySelector('#ar-target');
 
-            // Приховуємо завантажувач, коли сцена починає рендеринг
             sceneEl.addEventListener('renderstart', () => {
                 setTimeout(() => {
                     loader.style.display = 'none';
                 }, 500);
             });
             
-            // ДІАГНОСТИКА: Слухаємо події відстеження маркера
             target.addEventListener("targetFound", event => {
                 console.log("Marker Found!");
             });
