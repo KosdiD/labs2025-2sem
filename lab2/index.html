@@ -13,19 +13,37 @@
             top: 10px;
             left: 10px;
             color: white;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             padding: 10px;
             border-radius: 5px;
-            z-index: 100;
+            font-family: Arial;
+            z-index: 1000;
+        }
+        #resetTimer {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial;
+            z-index: 1000;
+        }
+        #mindar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div id="info">
-        Rolling Cylinder Physics with MindAR<br>
-        Marker: ../patterns/target.mind<br>
-        Cylinder resets every 7 seconds
-    </div>
+    <div id="info">Rolling Cylinder Physics with MindAR</div>
+    <div id="resetTimer">Next reset in: 7.0s</div>
+    <div id="mindar-container"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
@@ -33,29 +51,35 @@
     
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            // Initialize MindAR
+            // Initialize MindAR with proper container
             const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-                container: document.body,
-                imageTargetSrc: "../patterns/target.mind",
+                container: document.getElementById("mindar-container"),
+                imageTargetSrc: "../patterns/rolling.mind",
+                uiScanning: "#info",
+                uiLoading: "no",
+                filterMinCF: 0.8,
+                filterBeta: 1000
             });
 
             const { renderer, scene, camera } = mindarThree;
+            
+            // Configure renderer
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
 
-            // Add anchor
-            const anchor = mindarThree.addAnchor(0);
-            const group = new THREE.Group();
-            group.scale.set(0.5, 0.5, 0.5); // Adjusted scale
-            anchor.group.add(group);
-
-            // Lighting
+            // Lighting setup
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
 
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(10, 15, 10);
             directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 50;
             scene.add(directionalLight);
 
             // Physics world
@@ -67,82 +91,119 @@
             // Materials
             const groundMaterial = new CANNON.Material('ground');
             const cylinderMaterial = new CANNON.Material('cylinder');
-            
             const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
                 friction: 0.4,
                 restitution: 0.1
             });
             world.addContactMaterial(contactMaterial);
 
-            // Ground floor
-            const floorGeometry = new THREE.PlaneGeometry(30, 30);
-            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC8A4 });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.y = -2;
-            floor.receiveShadow = true;
-            group.add(floor);
+            // Create anchor group
+            const anchor = mindarThree.addAnchor(0);
+            const group = new THREE.Group();
+            group.scale.set(0.1, 0.1, 0.1); // Adjusted scale for better AR visibility
+            group.position.set(0, 0, -2); // Move back slightly for better viewing
+            anchor.group.add(group);
 
-            const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
-            const floorBody = new CANNON.Body({
-                mass: 0,
-                material: groundMaterial,
-                position: new CANNON.Vec3(0, -2, 0)
-            });
-            floorBody.addShape(floorShape);
-            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-            world.add(floorBody);
+            // Create scene objects
+            createPhysicsScene(group, world);
 
-            // Inclined plane
-            const inclineAngle = Math.PI / 4; // 45 degrees
-            const inclineLength = 15;
-            const inclineWidth = 8;
+            // Start MindAR
+            try {
+                await mindarThree.start();
+                renderer.setAnimationLoop(() => {
+                    updatePhysics();
+                    renderer.render(scene, camera);
+                });
+            } catch (error) {
+                console.error("Error starting MindAR:", error);
+                document.getElementById("info").textContent = "Error loading AR. Please try again.";
+            }
 
-            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
-            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC224 });
-            const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-            inclinedPlane.position.set(0, 3, 0);
-            inclinedPlane.rotation.x = -inclineAngle;
-            inclinedPlane.receiveShadow = true;
-            inclinedPlane.castShadow = true;
-            group.add(inclinedPlane);
-
-            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
-            const planeBody = new CANNON.Body({
-                mass: 0,
-                material: groundMaterial,
-                position: new CANNON.Vec3(0, 3, 0)
-            });
-            planeBody.addShape(planeShape);
-            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
-            world.add(planeBody);
-
-            // Cylinder
-            const cylinderRadius = 0.5;
-            const cylinderHeight = 2;
-            const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
-            cylinder.castShadow = true;
-            cylinder.receiveShadow = true;
-            group.add(cylinder);
-
-            // Cylinder physics
-            const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
-            const cylinderBody = new CANNON.Body({
-                mass: 5,
-                material: cylinderMaterial
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            // Rotate cylinder shape to match Three.js orientation
-            const quaternion = new CANNON.Quaternion();
-            quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-            cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
-            world.add(cylinderBody);
+            // Physics objects
+            let cylinderBody, cylinderMesh;
+            let lastResetTime = Date.now();
+            const resetInterval = 7000; // 7 seconds
 
-            // Initial position and rotation with auto-reset every 7 seconds
-            let lastResetTime = 0;
-            
+            function createPhysicsScene(group, world) {
+                // Ground floor
+                const floorGeometry = new THREE.PlaneGeometry(30, 30);
+                const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC8A4 });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -2;
+                floor.receiveShadow = true;
+                group.add(floor);
+
+                const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
+                const floorBody = new CANNON.Body({
+                    mass: 0,
+                    material: groundMaterial,
+                    position: new CANNON.Vec3(0, -2, 0)
+                });
+                floorBody.addShape(floorShape);
+                floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+                world.add(floorBody);
+
+                // Inclined plane
+                const inclineAngle = Math.PI / 4; // 45 degrees
+                const inclineLength = 15;
+                const inclineWidth = 8;
+
+                const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
+                const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC224 });
+                const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+                inclinedPlane.position.set(0, 3, 0);
+                inclinedPlane.rotation.x = -inclineAngle;
+                inclinedPlane.receiveShadow = true;
+                inclinedPlane.castShadow = true;
+                group.add(inclinedPlane);
+
+                const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
+                const planeBody = new CANNON.Body({
+                    mass: 0,
+                    material: groundMaterial,
+                    position: new CANNON.Vec3(0, 3, 0)
+                });
+                planeBody.addShape(planeShape);
+                planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
+                world.add(planeBody);
+
+                // Cylinder
+                const cylinderRadius = 0.5;
+                const cylinderHeight = 2;
+                const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
+                const cylinderMaterialThree = new THREE.MeshLambertMaterial({ 
+                    color: 0xff0000,
+                    flatShading: true
+                });
+                cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
+                cylinderMesh.castShadow = true;
+                cylinderMesh.receiveShadow = true;
+                group.add(cylinderMesh);
+
+                // Cylinder physics
+                const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
+                cylinderBody = new CANNON.Body({
+                    mass: 5,
+                    material: cylinderMaterial
+                });
+
+                // Rotate cylinder shape to match Three.js orientation
+                const quaternion = new CANNON.Quaternion();
+                quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+                cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
+                world.add(cylinderBody);
+
+                resetCylinder();
+            }
+
             function resetCylinder() {
                 cylinderBody.position.set(0, 7, -4);
                 cylinderBody.velocity.set(0, 0, 0);
@@ -156,41 +217,32 @@
                 
                 lastResetTime = Date.now();
             }
-            resetCylinder();
 
-            // Animation loop
-            const clock = new THREE.Clock();
-            
-            function animate() {
-                requestAnimationFrame(animate);
-                
+            function updatePhysics() {
                 const deltaTime = Math.min(clock.getDelta(), 0.1);
                 world.step(deltaTime);
                 
-                // Update cylinder
-                cylinder.position.copy(cylinderBody.position);
-                cylinder.quaternion.copy(cylinderBody.quaternion);
+                // Update cylinder mesh to match physics body
+                if (cylinderBody && cylinderMesh) {
+                    cylinderMesh.position.copy(cylinderBody.position);
+                    cylinderMesh.quaternion.copy(cylinderBody.quaternion);
+                }
                 
                 // Auto-reset every 7 seconds
-                if (Date.now() - lastResetTime > 7000) {
+                if (Date.now() - lastResetTime > resetInterval) {
                     resetCylinder();
                 }
                 
-                // Rotate group left and right
+                // Update timer display
+                const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000).toFixed(1);
+                document.getElementById("resetTimer").textContent = `Next reset in: ${timeLeft}s`;
+                
+                // Gentle rotation of the entire scene
                 const time = Date.now() * 0.001;
-                group.rotation.y = Math.sin(time * 0.5) * 0.5; // Gentle swaying motion
+                group.rotation.y = Math.sin(time * 0.5) * 0.3;
             }
 
-            // Start MindAR
-            await mindarThree.start();
-            animate();
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+            const clock = new THREE.Clock();
         });
     </script>
 </body>
