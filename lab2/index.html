@@ -6,7 +6,10 @@
     <style>
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
         #info {
             position: absolute;
@@ -18,6 +21,7 @@
             border-radius: 5px;
             font-family: Arial;
             z-index: 1000;
+            pointer-events: none;
         }
         #resetTimer {
             position: absolute;
@@ -29,6 +33,7 @@
             border-radius: 5px;
             font-family: Arial;
             z-index: 1000;
+            pointer-events: none;
         }
         #mindar-container {
             position: absolute;
@@ -38,212 +43,240 @@
             height: 100%;
             overflow: hidden;
         }
+        #start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
     </style>
 </head>
 <body>
     <div id="info">Rolling Cylinder Physics with MindAR</div>
     <div id="resetTimer">Next reset in: 7.0s</div>
+    <button id="start-button">Start AR Experience</button>
     <div id="mindar-container"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <!-- Load Three.js and Cannon.js only once -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
     
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            // Initialize MindAR with proper container
-            const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-                container: document.getElementById("mindar-container"),
-                imageTargetSrc: "../patterns/target.mind",
-                uiScanning: "#info",
-                uiLoading: "no",
-                filterMinCF: 0.8,
-                filterBeta: 1000
-            });
+        // Declare variables at the top level
+        let mindarThree;
+        let cylinderBody, cylinderMesh;
+        let lastResetTime = Date.now();
+        const resetInterval = 7000; // 7 seconds
+        const clock = new THREE.Clock();
 
-            const { renderer, scene, camera } = mindarThree;
-            
-            // Configure renderer
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.outputEncoding = THREE.sRGBEncoding;
+        document.getElementById('start-button').addEventListener('click', async () => {
+            document.getElementById('start-button').style.display = 'none';
+            initAR();
+        });
 
-            // Lighting setup
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(10, 15, 10);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 1024;
-            directionalLight.shadow.mapSize.height = 1024;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 50;
-            scene.add(directionalLight);
-
-            // Physics world
-            const world = new CANNON.World();
-            world.gravity.set(0, -9.82, 0);
-            world.broadphase = new CANNON.NaiveBroadphase();
-            world.solver.iterations = 10;
-
-            // Materials
-            const groundMaterial = new CANNON.Material('ground');
-            const cylinderMaterial = new CANNON.Material('cylinder');
-            const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
-                friction: 0.4,
-                restitution: 0.1
-            });
-            world.addContactMaterial(contactMaterial);
-
-            // Create anchor group
-            const anchor = mindarThree.addAnchor(0);
-            const group = new THREE.Group();
-            group.scale.set(0.1, 0.1, 0.1); // Adjusted scale for better AR visibility
-            group.position.set(0, 0, -2); // Move back slightly for better viewing
-            anchor.group.add(group);
-
-            // Create scene objects
-            createPhysicsScene(group, world);
-
-            // Start MindAR
+        async function initAR() {
             try {
-                await mindarThree.start();
-                renderer.setAnimationLoop(() => {
-                    updatePhysics();
-                    renderer.render(scene, camera);
+                // Initialize MindAR with proper container
+                mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                    container: document.getElementById("mindar-container"),
+                    imageTargetSrc: "../patterns/rolling.mind",
+                    uiScanning: "#info",
+                    uiLoading: "no",
+                    filterMinCF: 0.8,
+                    filterBeta: 1000
                 });
-            } catch (error) {
-                console.error("Error starting MindAR:", error);
-                document.getElementById("info").textContent = "Error loading AR. Please try again.";
-            }
 
-            // Handle window resize
-            window.addEventListener('resize', () => {
+                const { renderer, scene, camera } = mindarThree;
+                
+                // Configure renderer
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.outputEncoding = THREE.sRGBEncoding;
+
+                // Set camera aspect ratio
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
+
+                // Lighting setup
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 15, 10);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 1024;
+                directionalLight.shadow.mapSize.height = 1024;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                scene.add(directionalLight);
+
+                // Physics world
+                const world = new CANNON.World();
+                world.gravity.set(0, -9.82, 0);
+                world.broadphase = new CANNON.NaiveBroadphase();
+                world.solver.iterations = 10;
+
+                // Materials
+                const groundMaterial = new CANNON.Material('ground');
+                const cylinderMaterial = new CANNON.Material('cylinder');
+                const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
+                    friction: 0.4,
+                    restitution: 0.1
+                });
+                world.addContactMaterial(contactMaterial);
+
+                // Create anchor group
+                const anchor = mindarThree.addAnchor(0);
+                const group = new THREE.Group();
+                group.scale.set(0.1, 0.1, 0.1); // Adjusted scale for better AR visibility
+                group.position.set(0, 0, -2); // Move back slightly for better viewing
+                anchor.group.add(group);
+
+                // Create scene objects
+                createPhysicsScene(group, world);
+
+                // Start MindAR
+                await mindarThree.start();
+                renderer.setAnimationLoop(() => {
+                    updatePhysics(world);
+                    renderer.render(scene, camera);
+                });
+
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+            } catch (error) {
+                console.error("Error starting AR:", error);
+                document.getElementById("info").textContent = "Error loading AR. Please refresh and try again.";
+                document.getElementById('start-button').style.display = 'block';
+            }
+        }
+
+        function createPhysicsScene(group, world) {
+            // Ground floor
+            const floorGeometry = new THREE.PlaneGeometry(30, 30);
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x7BC8A4,
+                side: THREE.DoubleSide
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -2;
+            floor.receiveShadow = true;
+            group.add(floor);
+
+            const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
+            const floorBody = new CANNON.Body({
+                mass: 0,
+                material: groundMaterial,
+                position: new CANNON.Vec3(0, -2, 0)
+            });
+            floorBody.addShape(floorShape);
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.add(floorBody);
+
+            // Inclined plane
+            const inclineAngle = Math.PI / 4; // 45 degrees
+            const inclineLength = 15;
+            const inclineWidth = 8;
+
+            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
+            const planeMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x7BC224,
+                side: THREE.DoubleSide
+            });
+            const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            inclinedPlane.position.set(0, 3, 0);
+            inclinedPlane.rotation.x = -inclineAngle;
+            inclinedPlane.receiveShadow = true;
+            inclinedPlane.castShadow = true;
+            group.add(inclinedPlane);
+
+            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
+            const planeBody = new CANNON.Body({
+                mass: 0,
+                material: groundMaterial,
+                position: new CANNON.Vec3(0, 3, 0)
+            });
+            planeBody.addShape(planeShape);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
+            world.add(planeBody);
+
+            // Cylinder
+            const cylinderRadius = 0.5;
+            const cylinderHeight = 2;
+            const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
+            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ 
+                color: 0xff0000
+            });
+            cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
+            cylinderMesh.castShadow = true;
+            cylinderMesh.receiveShadow = true;
+            group.add(cylinderMesh);
+
+            // Cylinder physics
+            const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
+            cylinderBody = new CANNON.Body({
+                mass: 5,
+                material: cylinderMaterial
             });
 
-            // Physics objects
-            let cylinderBody, cylinderMesh;
-            let lastResetTime = Date.now();
-            const resetInterval = 7000; // 7 seconds
+            // Rotate cylinder shape to match Three.js orientation
+            const quaternion = new CANNON.Quaternion();
+            quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
+            world.add(cylinderBody);
 
-            function createPhysicsScene(group, world) {
-                // Ground floor
-                const floorGeometry = new THREE.PlaneGeometry(30, 30);
-                const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC8A4 });
-                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-                floor.rotation.x = -Math.PI / 2;
-                floor.position.y = -2;
-                floor.receiveShadow = true;
-                group.add(floor);
+            resetCylinder();
+        }
 
-                const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
-                const floorBody = new CANNON.Body({
-                    mass: 0,
-                    material: groundMaterial,
-                    position: new CANNON.Vec3(0, -2, 0)
-                });
-                floorBody.addShape(floorShape);
-                floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-                world.add(floorBody);
+        function resetCylinder() {
+            cylinderBody.position.set(0, 7, -4);
+            cylinderBody.velocity.set(0, 0, 0);
+            cylinderBody.angularVelocity.set(0, 0, 0);
+            cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+            
+            // Apply initial impulse
+            const impulse = new CANNON.Vec3(0, 0, 3);
+            const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
+            cylinderBody.applyImpulse(impulse, worldPoint);
+            
+            lastResetTime = Date.now();
+        }
 
-                // Inclined plane
-                const inclineAngle = Math.PI / 4; // 45 degrees
-                const inclineLength = 15;
-                const inclineWidth = 8;
-
-                const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
-                const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC224 });
-                const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-                inclinedPlane.position.set(0, 3, 0);
-                inclinedPlane.rotation.x = -inclineAngle;
-                inclinedPlane.receiveShadow = true;
-                inclinedPlane.castShadow = true;
-                group.add(inclinedPlane);
-
-                const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
-                const planeBody = new CANNON.Body({
-                    mass: 0,
-                    material: groundMaterial,
-                    position: new CANNON.Vec3(0, 3, 0)
-                });
-                planeBody.addShape(planeShape);
-                planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
-                world.add(planeBody);
-
-                // Cylinder
-                const cylinderRadius = 0.5;
-                const cylinderHeight = 2;
-                const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-                const cylinderMaterialThree = new THREE.MeshLambertMaterial({ 
-                    color: 0xff0000,
-                    flatShading: true
-                });
-                cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
-                cylinderMesh.castShadow = true;
-                cylinderMesh.receiveShadow = true;
-                group.add(cylinderMesh);
-
-                // Cylinder physics
-                const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
-                cylinderBody = new CANNON.Body({
-                    mass: 5,
-                    material: cylinderMaterial
-                });
-
-                // Rotate cylinder shape to match Three.js orientation
-                const quaternion = new CANNON.Quaternion();
-                quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-                cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
-                world.add(cylinderBody);
-
+        function updatePhysics(world) {
+            const deltaTime = Math.min(clock.getDelta(), 0.1);
+            world.step(deltaTime);
+            
+            // Update cylinder mesh to match physics body
+            if (cylinderBody && cylinderMesh) {
+                cylinderMesh.position.copy(cylinderBody.position);
+                cylinderMesh.quaternion.copy(cylinderBody.quaternion);
+            }
+            
+            // Auto-reset every 7 seconds
+            if (Date.now() - lastResetTime > resetInterval) {
                 resetCylinder();
             }
-
-            function resetCylinder() {
-                cylinderBody.position.set(0, 7, -4);
-                cylinderBody.velocity.set(0, 0, 0);
-                cylinderBody.angularVelocity.set(0, 0, 0);
-                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-                
-                // Apply initial impulse
-                const impulse = new CANNON.Vec3(0, 0, 3);
-                const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
-                cylinderBody.applyImpulse(impulse, worldPoint);
-                
-                lastResetTime = Date.now();
-            }
-
-            function updatePhysics() {
-                const deltaTime = Math.min(clock.getDelta(), 0.1);
-                world.step(deltaTime);
-                
-                // Update cylinder mesh to match physics body
-                if (cylinderBody && cylinderMesh) {
-                    cylinderMesh.position.copy(cylinderBody.position);
-                    cylinderMesh.quaternion.copy(cylinderBody.quaternion);
-                }
-                
-                // Auto-reset every 7 seconds
-                if (Date.now() - lastResetTime > resetInterval) {
-                    resetCylinder();
-                }
-                
-                // Update timer display
-                const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000).toFixed(1);
-                document.getElementById("resetTimer").textContent = `Next reset in: ${timeLeft}s`;
-                
-                // Gentle rotation of the entire scene
-                const time = Date.now() * 0.001;
-                group.rotation.y = Math.sin(time * 0.5) * 0.3;
-            }
-
-            const clock = new THREE.Clock();
-        });
+            
+            // Update timer display
+            const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000;
+            document.getElementById("resetTimer").textContent = `Next reset in: ${timeLeft.toFixed(1)}s`;
+        }
     </script>
 </body>
 </html>
