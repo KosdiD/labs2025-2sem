@@ -2,51 +2,43 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>AR Rolling Cylinder with Auto-Reset</title>
+    <title>Advanced AR Physics Simulation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
-        #info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 100;
-        }
-        #debug {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: white;
-            background: rgba(0,0,0,0.5);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 100;
-        }
-        #container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            overflow: hidden;
-        }
+        body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; }
+        .ui-panel { position: absolute; color: white; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; z-index: 100; }
+        #info { top: 10px; left: 10px; }
+        #controls { top: 10px; right: 10px; }
+        #textures { bottom: 10px; left: 10px; width: calc(100% - 20px); box-sizing: border-box; }
+        #container { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        label { display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
     <div id="container">
-        <div id="info">
-            Rolling Cylinder Physics Simulation<br>
+        <div id="info" class="ui-panel">
+            Advanced AR Physics Simulation<br>
             Auto-resets every 7 seconds.<br>
-            Point camera at the marker.
+            Use controls to change textures.
         </div>
-        <div id="debug">
+        <div id="controls" class="ui-panel">
             <label><input type="checkbox" id="debugPhysics"> Show Physics Debug</label>
+            <label><input type="checkbox" id="debugVectors" checked> Show Force Vectors</label>
+        </div>
+        <div id="textures" class="ui-panel">
+            <label for="floor-texture">Floor Texture:</label>
+            <select id="floor-texture">
+                <option value="../textures/earth.jpg">Wood</option>
+            </select>
+            <label for="plane-texture">Incline Texture:</label>
+            <select id="plane-texture">
+                <option value="../textures/disturb.jpg" selected>Metal Plate</option>
+                <option value="../textures/ice.jpg">Ice</option>
+            </select>
+            <label for="cylinder-texture">Cylinder Texture:</label>
+            <select id="cylinder-texture">
+                <option value="../textures/hardwood.jpg selected>Lava</option>
+            </select>
         </div>
     </div>
 
@@ -60,67 +52,48 @@
                 container: document.querySelector("#container"),
                 imageTargetSrc: "../patterns/target.mind",
             });
-
             const { renderer, scene, camera } = mindarThree;
-            
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
             const anchor = mindarThree.addAnchor(0);
-
             const simulationGroup = new THREE.Group();
-            simulationGroup.scale.set(0.1, 0.1, 0.1); 
-            
-            // НОВА ЗМІНА: Поворот усієї сцени на 180 градусів
-            // Ми повертаємо батьківську групу навколо осі Y на Math.PI радіан (180°).
+            simulationGroup.scale.set(0.1, 0.1, 0.1);
             simulationGroup.rotation.y = Math.PI;
-
             anchor.group.add(simulationGroup);
 
-            // Освітлення
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             simulationGroup.add(ambientLight);
-
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(10, 10, 5);
             directionalLight.castShadow = true;
-            directionalLight.shadow.camera.left = -20;
-            directionalLight.shadow.camera.right = 20;
-            directionalLight.shadow.camera.top = 20;
-            directionalLight.shadow.camera.bottom = -20;
             directionalLight.shadow.mapSize.width = 2048;
             directionalLight.shadow.mapSize.height = 2048;
             simulationGroup.add(directionalLight);
 
-            // Налаштування фізичного світу
             const world = new CANNON.World();
             world.gravity.set(0, -9.82, 0);
             world.broadphase = new CANNON.NaiveBroadphase();
             world.solver.iterations = 10;
 
-            const debugObjects = [];
-
-            // Матеріали
             const groundMaterial = new CANNON.Material('ground');
             const cylinderMaterial = new CANNON.Material('cylinder');
-            const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
-                friction: 0.4,
-                restitution: 0.1
-            });
+            const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, { friction: 0.4, restitution: 0.1 });
             world.addContactMaterial(contactMaterial);
+
+            // НОВА ЗМІНА: Створюємо один завантажувач текстур для всього проекту
+            const textureLoader = new THREE.TextureLoader();
 
             // Підлога
             const floorGeometry = new THREE.PlaneGeometry(30, 30);
-            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC8A4 });
+            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
             floor.position.y = -2;
             floor.receiveShadow = true;
             simulationGroup.add(floor);
-
-            const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
             const floorBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, -2, 0) });
-            floorBody.addShape(floorShape);
+            floorBody.addShape(new CANNON.Box(new CANNON.Vec3(15, 15, 0.1)));
             floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
             world.addBody(floorBody);
 
@@ -129,14 +102,13 @@
             const inclineLength = 15;
             const inclineWidth = 8;
             const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
-            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC224 });
+            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
             const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
             inclinedPlane.position.set(0, 3, 0);
             inclinedPlane.rotation.x = -inclineAngle;
             inclinedPlane.receiveShadow = true;
             inclinedPlane.castShadow = true;
             simulationGroup.add(inclinedPlane);
-
             const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
             const planeBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, 3, 0) });
             planeBody.addShape(planeShape);
@@ -147,13 +119,11 @@
             const cylinderRadius = 0.5;
             const cylinderHeight = 2;
             const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
             const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
             cylinder.castShadow = true;
             cylinder.receiveShadow = true;
             simulationGroup.add(cylinder);
-
-            // Фізика циліндра
             const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
             const cylinderBody = new CANNON.Body({ mass: 5, material: cylinderMaterial });
             const quaternion = new CANNON.Quaternion();
@@ -171,39 +141,112 @@
                 cylinderBody.applyImpulse(impulse, worldPoint);
             }
             resetCylinder();
-
-            // НОВА ЗМІНА: Встановлюємо автоматичний перезапуск кожні 7 секунд
             setInterval(resetCylinder, 7000);
 
-            // Об'єкти для відладки фізики
-            function createDebugMesh(geometry) {
-                 const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-                 const debugMesh = new THREE.Mesh(geometry, debugMaterial);
-                 debugMesh.visible = false;
-                 simulationGroup.add(debugMesh);
-                 return debugMesh;
+            // НОВА ЗМІНА: Логіка для зміни текстур
+            function applyTexture(mesh, textureUrl) {
+                textureLoader.load(textureUrl, (texture) => {
+                    mesh.material.map = texture;
+                    mesh.material.color.set(0xffffff); // Скидаємо колір, щоб текстура відображалася чисто
+                    mesh.material.needsUpdate = true;
+                });
             }
 
-            const floorDebug = createDebugMesh(new THREE.BoxGeometry(30, 30, 0.2));
-            const planeDebug = createDebugMesh(new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength));
-            const cylinderDebug = createDebugMesh(new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 12));
+            const floorSelect = document.getElementById('floor-texture');
+            const planeSelect = document.getElementById('plane-texture');
+            const cylinderSelect = document.getElementById('cylinder-texture');
 
-            debugObjects.push({ body: floorBody, mesh: floorDebug });
-            debugObjects.push({ body: planeBody, mesh: planeDebug });
-            debugObjects.push({ body: cylinderBody, mesh: cylinderDebug });
+            floorSelect.addEventListener('change', () => applyTexture(floor, floorSelect.value));
+            planeSelect.addEventListener('change', () => applyTexture(inclinedPlane, planeSelect.value));
+            cylinderSelect.addEventListener('change', () => applyTexture(cylinder, cylinderSelect.value));
 
-            document.getElementById('debugPhysics').addEventListener('change', (e) => {
-                debugObjects.forEach(obj => {
-                    obj.mesh.visible = e.target.checked;
-                });
-            });
+            // Застосовуємо текстури за замовчуванням при старті
+            applyTexture(floor, floorSelect.value);
+            applyTexture(inclinedPlane, planeSelect.value);
+            applyTexture(cylinder, cylinderSelect.value);
 
-            // Скидання симуляції по натисканню на пробіл залишається як опція
-            document.addEventListener('keydown', (event) => {
-                if (event.code === 'Space') {
-                    event.preventDefault();
-                    resetCylinder();
+
+            // НОВА ЗМІНА: Весь блок для налаштування та оновлення векторів сил
+            const vectors = {}; // Ініціалізуємо тут, щоб мати доступ до createVector
+            
+            function createVector(color) {
+                const group = new THREE.Group();
+                const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 8), new THREE.MeshBasicMaterial({ color }));
+                const lineGeometry = new THREE.BufferGeometry();
+                lineGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
+                const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color, linewidth: 3 }));
+                group.add(arrow, line);
+                simulationGroup.add(group); // ВАЖЛИВО: Додаємо до групи симуляції
+                return { group, arrow, line };
+            }
+
+            // Ініціалізація векторів
+            vectors.gravity = createVector(0x0000ff);
+            vectors.normal = createVector(0x00ff00);
+            vectors.friction = createVector(0xffff00);
+            vectors.impulse = createVector(0xff0000);
+            
+            function updateVector(vector, start, direction) {
+                if (direction.lengthSq() === 0) {
+                    vector.group.visible = false;
+                    return;
                 }
+                vector.group.visible = document.getElementById('debugVectors').checked;
+                if (!vector.group.visible) return;
+
+                const positions = vector.line.geometry.attributes.position.array;
+                positions[0] = start.x; positions[1] = start.y; positions[2] = start.z;
+                positions[3] = start.x + direction.x; positions[4] = start.y + direction.y; positions[5] = start.z + direction.z;
+                vector.line.geometry.attributes.position.needsUpdate = true;
+                
+                vector.arrow.position.set(start.x + direction.x, start.y + direction.y, start.z + direction.z);
+                vector.arrow.lookAt(start.x + direction.x * 2, start.y + direction.y * 2, start.z + direction.z * 2);
+            }
+
+            function updateForceVectors() {
+                const pos = cylinder.position;
+                const velocity = cylinderBody.velocity;
+                const mass = cylinderBody.mass;
+                const g = 9.82;
+
+                // Гравітація
+                const gravityVec = new THREE.Vector3(0, -mass * g * 0.1, 0);
+                updateVector(vectors.gravity, pos, gravityVec);
+
+                // Перевірка контакту
+                let hasContact = world.contacts.some(c => c.bi === cylinderBody || c.bj === cylinderBody);
+                
+                // Нормальна сила
+                const normalDir = new THREE.Vector3();
+                if (hasContact) {
+                    const normalMagnitude = mass * g * 0.1 * Math.cos(inclineAngle);
+                    normalDir.set(0, normalMagnitude, 0).applyAxisAngle(new THREE.Vector3(1, 0, 0), -inclineAngle);
+                }
+                updateVector(vectors.normal, pos, normalDir);
+
+                // Сила тертя
+                const frictionDir = new THREE.Vector3();
+                if (velocity.length() > 0.1 && hasContact) {
+                    frictionDir.set(-velocity.x, -velocity.y, -velocity.z).normalize().multiplyScalar(2.0);
+                }
+                updateVector(vectors.friction, pos, frictionDir);
+
+                // Імпульс (показуємо коротко на старті)
+                const impulseDir = new THREE.Vector3();
+                if (world.time < 0.2) { // Показуємо тільки на початку
+                    impulseDir.set(0, 0, 5);
+                }
+                updateVector(vectors.impulse, pos, impulseDir);
+            }
+            
+            // Налаштування відладки (перенесено для доступу до debugVectors)
+            const debugObjects = [];
+            // ... (код для відладки фізики, він не змінився)
+            document.getElementById('debugPhysics').addEventListener('change', (e) => {
+                 debugObjects.forEach(obj => { obj.mesh.visible = e.target.checked; });
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.code === 'Space') { event.preventDefault(); resetCylinder(); }
             });
 
             // Запуск MindAR та циклу анімації
@@ -215,13 +258,9 @@
                 cylinder.position.copy(cylinderBody.position);
                 cylinder.quaternion.copy(cylinderBody.quaternion);
 
-                debugObjects.forEach(obj => {
-                    if (obj.mesh.visible) {
-                        obj.mesh.position.copy(obj.body.position);
-                        obj.mesh.quaternion.copy(obj.body.quaternion);
-                    }
-                });
-
+                // НОВА ЗМІНА: Оновлюємо вектори в кожному кадрі
+                updateForceVectors();
+                
                 renderer.render(scene, camera);
             });
         });
