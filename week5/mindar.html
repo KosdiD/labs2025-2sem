@@ -1,4 +1,4 @@
-// При завантаженні сцени хов<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -15,23 +15,6 @@
         width: 100%;
         height: 100%;
         position: fixed;
-      }
-      .arjs-loader {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: rgba(0, 0, 0, 0.8);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      .arjs-loader div {
-        text-align: center;
-        font-size: 1.25em;
-        color: white;
       }
       
       /* Контроли для масштабу */
@@ -97,10 +80,6 @@
     </style>
   </head>
   <body>
-    <div class="arjs-loader">
-      <div>Завантаження сонячної системи...</div>
-    </div>
-    
     <div class="mode-indicator" id="mode-indicator">Режим: Анімація</div>
     
     <!-- Контрольна панель з масштабом -->
@@ -424,19 +403,9 @@
         const massValue = document.getElementById('mass-value');
         const planetSelect = document.getElementById('planet-select');
         const solarSystem = document.getElementById('solar-system');
-        const arjsLoader = document.querySelector('.arjs-loader');
         
         let scale = 0.01;
         let selectedPlanet = 'mercury';
-        
-        const scene = document.querySelector('a-scene');
-        if (scene.hasLoaded) {
-          arjsLoader.style.display = 'none';
-        } else {
-          scene.addEventListener('loaded', function() {
-            arjsLoader.style.display = 'none';
-          });
-        }
         
         function updateScale() {
           solarSystem.setAttribute('scale', `${scale} ${scale} ${scale}`);
@@ -498,12 +467,6 @@
         
         updateScale();
         updateMassDisplay();
-        
-
-        
-  
-          }
-        });
       });
     </script>
   </body>
