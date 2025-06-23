@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>AR Rolling Cylinder with CANNON Physics</title>
+    <title>AR Rolling Cylinder with Auto-Reset</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body {
@@ -30,7 +30,6 @@
             border-radius: 5px;
             z-index: 100;
         }
-        /* MindAR вимагає контейнер, щоб займати весь екран */
         #container {
             width: 100vw;
             height: 100vh;
@@ -43,8 +42,8 @@
     <div id="container">
         <div id="info">
             Rolling Cylinder Physics Simulation<br>
-            Point camera at the marker<br>
-            Press SPACE to reset cylinder
+            Auto-resets every 7 seconds.<br>
+            Point camera at the marker.
         </div>
         <div id="debug">
             <label><input type="checkbox" id="debugPhysics"> Show Physics Debug</label>
@@ -57,29 +56,25 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            // Крок 1: Ініціалізація MindAR
-            // Ми створюємо екземпляр MindARThree, передаючи йому контейнер і шлях до файлу маркера.
-            // Шлях '../patterns/target.mind' вказує, що файл маркера знаходиться на рівень вище в папці 'patterns'.
             const mindarThree = new window.MINDAR.IMAGE.MindARThree({
                 container: document.querySelector("#container"),
                 imageTargetSrc: "../patterns/target.mind",
             });
 
-            // Отримуємо рендерер, сцену та камеру від MindAR.
             const { renderer, scene, camera } = mindarThree;
             
-            // Налаштування тіней для рендерера
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-            // Крок 2: Створення якоря для маркера
-            // Якір - це точка в просторі, прив'язана до маркера.
-            // Усі об'єкти, додані до anchor.group, будуть відображатися на маркері.
             const anchor = mindarThree.addAnchor(0);
 
-            // Створюємо групу для всіх об'єктів симуляції, щоб легко керувати їх масштабом.
             const simulationGroup = new THREE.Group();
-            simulationGroup.scale.set(0.1, 0.1, 0.1); // Зменшуємо масштаб, щоб симуляція гарно виглядала на маркері
+            simulationGroup.scale.set(0.1, 0.1, 0.1); 
+            
+            // НОВА ЗМІНА: Поворот усієї сцени на 180 градусів
+            // Ми повертаємо батьківську групу навколо осі Y на Math.PI радіан (180°).
+            simulationGroup.rotation.y = Math.PI;
+
             anchor.group.add(simulationGroup);
 
             // Освітлення
@@ -97,9 +92,7 @@
             directionalLight.shadow.mapSize.height = 2048;
             simulationGroup.add(directionalLight);
 
-            // Крок 3: Налаштування фізичного світу
-            // Ця частина залишається майже без змін, але всі візуальні об'єкти
-            // будуть додаватися до 'simulationGroup' замість 'scene'.
+            // Налаштування фізичного світу
             const world = new CANNON.World();
             world.gravity.set(0, -9.82, 0);
             world.broadphase = new CANNON.NaiveBroadphase();
@@ -123,7 +116,7 @@
             floor.rotation.x = -Math.PI / 2;
             floor.position.y = -2;
             floor.receiveShadow = true;
-            simulationGroup.add(floor); // Додаємо до групи
+            simulationGroup.add(floor);
 
             const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
             const floorBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, -2, 0) });
@@ -142,7 +135,7 @@
             inclinedPlane.rotation.x = -inclineAngle;
             inclinedPlane.receiveShadow = true;
             inclinedPlane.castShadow = true;
-            simulationGroup.add(inclinedPlane); // Додаємо до групи
+            simulationGroup.add(inclinedPlane);
 
             const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
             const planeBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, 3, 0) });
@@ -158,7 +151,7 @@
             const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
             cylinder.castShadow = true;
             cylinder.receiveShadow = true;
-            simulationGroup.add(cylinder); // Додаємо до групи
+            simulationGroup.add(cylinder);
 
             // Фізика циліндра
             const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
@@ -179,13 +172,15 @@
             }
             resetCylinder();
 
+            // НОВА ЗМІНА: Встановлюємо автоматичний перезапуск кожні 7 секунд
+            setInterval(resetCylinder, 7000);
+
             // Об'єкти для відладки фізики
-            // ... (код для відладки залишається, але візуальні сітки додаємо до групи)
             function createDebugMesh(geometry) {
                  const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
                  const debugMesh = new THREE.Mesh(geometry, debugMaterial);
                  debugMesh.visible = false;
-                 simulationGroup.add(debugMesh); // Додаємо до групи
+                 simulationGroup.add(debugMesh);
                  return debugMesh;
             }
 
@@ -203,7 +198,7 @@
                 });
             });
 
-            // Скидання симуляції по натисканню на пробіл
+            // Скидання симуляції по натисканню на пробіл залишається як опція
             document.addEventListener('keydown', (event) => {
                 if (event.code === 'Space') {
                     event.preventDefault();
@@ -211,21 +206,12 @@
                 }
             });
 
-            // Крок 4: Запуск MindAR та циклу анімації
+            // Запуск MindAR та циклу анімації
             const clock = new THREE.Clock();
-
-            // Починаємо відстеження. Це асинхронна операція.
             await mindarThree.start();
-
-            // Використовуємо setAnimationLoop від рендерера MindAR.
-            // Ця функція буде викликатися на кожному кадрі.
             renderer.setAnimationLoop(() => {
                 const deltaTime = Math.min(clock.getDelta(), 0.1);
-                
-                // Оновлюємо фізичний світ
                 world.step(deltaTime);
-
-                // Оновлюємо позиції візуальних об'єктів відповідно до їхніх фізичних тіл
                 cylinder.position.copy(cylinderBody.position);
                 cylinder.quaternion.copy(cylinderBody.quaternion);
 
@@ -236,7 +222,6 @@
                     }
                 });
 
-                // Рендеримо сцену
                 renderer.render(scene, camera);
             });
         });
