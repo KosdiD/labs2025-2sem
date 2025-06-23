@@ -2,19 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Rolling Cylinder AR Physics</title>
+    <title>AR Rolling Cylinder with CANNON Physics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        body { 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-        #mindar-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
             overflow: hidden;
         }
         #info {
@@ -22,130 +15,230 @@
             top: 10px;
             left: 10px;
             color: white;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.5);
             padding: 10px;
             border-radius: 5px;
-            font-family: Arial;
-            z-index: 1000;
+            z-index: 100;
+        }
+        #debug {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        /* MindAR вимагає контейнер, щоб займати весь екран */
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
-    <div id="info">Loading AR experience...</div>
-    <div id="mindar-container"></div>
+    <div id="container">
+        <div id="info">
+            Rolling Cylinder Physics Simulation<br>
+            Point camera at the marker<br>
+            Press SPACE to reset cylinder
+        </div>
+        <div id="debug">
+            <label><input type="checkbox" id="debugPhysics"> Show Physics Debug</label>
+        </div>
+    </div>
 
-    <!-- Load MindAR which includes Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
-    
+
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            try {
-                // Initialize MindAR with proper container
-                const mindarThree = new window.MINDAR.IMAGE.MindARThree({
-                    container: document.body,  // Changed to document.body like in working example
-                    imageTargetSrc: "../patterns/rolling.mind",
-                    uiScanning: "#info",
-                    uiLoading: "no",
-                    filterMinCF: 0.8,
-                    filterBeta: 1000
-                });
+            // Крок 1: Ініціалізація MindAR
+            // Ми створюємо екземпляр MindARThree, передаючи йому контейнер і шлях до файлу маркера.
+            // Шлях '../patterns/target.mind' вказує, що файл маркера знаходиться на рівень вище в папці 'patterns'.
+            const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                container: document.querySelector("#container"),
+                imageTargetSrc: "../patterns/target.mind",
+            });
 
-                const { renderer, scene, camera } = mindarThree;
-                
-                // Configure renderer
-                renderer.shadowMap.enabled = true;
-                renderer.setPixelRatio(window.devicePixelRatio);
+            // Отримуємо рендерер, сцену та камеру від MindAR.
+            const { renderer, scene, camera } = mindarThree;
+            
+            // Налаштування тіней для рендерера
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-                // Lighting
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                scene.add(ambientLight);
+            // Крок 2: Створення якоря для маркера
+            // Якір - це точка в просторі, прив'язана до маркера.
+            // Усі об'єкти, додані до anchor.group, будуть відображатися на маркері.
+            const anchor = mindarThree.addAnchor(0);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(10, 15, 10);
-                directionalLight.castShadow = true;
-                scene.add(directionalLight);
+            // Створюємо групу для всіх об'єктів симуляції, щоб легко керувати їх масштабом.
+            const simulationGroup = new THREE.Group();
+            simulationGroup.scale.set(0.1, 0.1, 0.1); // Зменшуємо масштаб, щоб симуляція гарно виглядала на маркері
+            anchor.group.add(simulationGroup);
 
-                // Physics world
-                const world = new CANNON.World();
-                world.gravity.set(0, -9.82, 0);
-                world.broadphase = new CANNON.NaiveBroadphase();
-                world.solver.iterations = 10;
+            // Освітлення
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            simulationGroup.add(ambientLight);
 
-                // Create anchor group
-                const anchor = mindarThree.addAnchor(0);
-                const group = new THREE.Group();
-                group.scale.set(0.1, 0.1, 0.1);
-                anchor.group.add(group);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.left = -20;
+            directionalLight.shadow.camera.right = 20;
+            directionalLight.shadow.camera.top = 20;
+            directionalLight.shadow.camera.bottom = -20;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            simulationGroup.add(directionalLight);
 
-                // Add floor
-                const floor = new THREE.Mesh(
-                    new THREE.PlaneGeometry(30, 30),
-                    new THREE.MeshLambertMaterial({ color: 0x7BC8A4 })
-                );
-                floor.rotation.x = -Math.PI / 2;
-                floor.receiveShadow = true;
-                group.add(floor);
+            // Крок 3: Налаштування фізичного світу
+            // Ця частина залишається майже без змін, але всі візуальні об'єкти
+            // будуть додаватися до 'simulationGroup' замість 'scene'.
+            const world = new CANNON.World();
+            world.gravity.set(0, -9.82, 0);
+            world.broadphase = new CANNON.NaiveBroadphase();
+            world.solver.iterations = 10;
 
-                // Add inclined plane
-                const inclinedPlane = new THREE.Mesh(
-                    new THREE.BoxGeometry(10, 0.2, 80),
-                    new THREE.MeshLambertMaterial({ color: 0x7BC224 })
-                );
-                inclinedPlane.position.set(0, 5, 0);
-                inclinedPlane.rotation.x = -Math.PI / 4;
-                inclinedPlane.castShadow = true;
-                inclinedPlane.receiveShadow = true;
-                group.add(inclinedPlane);
+            const debugObjects = [];
 
-                // Add cylinder
-                const cylinderMesh = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.5, 0.5, 2, 32),
-                    new THREE.MeshLambertMaterial({ color: 0xff0000 })
-                );
-                cylinderMesh.castShadow = true;
-                group.add(cylinderMesh);
+            // Матеріали
+            const groundMaterial = new CANNON.Material('ground');
+            const cylinderMaterial = new CANNON.Material('cylinder');
+            const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
+                friction: 0.4,
+                restitution: 0.1
+            });
+            world.addContactMaterial(contactMaterial);
 
-                // Cylinder physics
-                const cylinderBody = new CANNON.Body({
-                    mass: 5,
-                    shape: new CANNON.Cylinder(0.5, 0.5, 2, 12)
-                });
-                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-                world.add(cylinderBody);
+            // Підлога
+            const floorGeometry = new THREE.PlaneGeometry(30, 30);
+            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC8A4 });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -2;
+            floor.receiveShadow = true;
+            simulationGroup.add(floor); // Додаємо до групи
 
-                // Reset function
-                function resetCylinder() {
-                    cylinderBody.position.set(0, 35, -10);
-                    cylinderBody.velocity.set(0, 0, 0);
-                    cylinderBody.angularVelocity.set(0, 0, 0);
-                    cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-                    
-                    const impulse = new CANNON.Vec3(0, 0, 5);
-                    cylinderBody.applyImpulse(impulse, new CANNON.Vec3(0, 35, -10));
-                }
+            const floorShape = new CANNON.Box(new CANNON.Vec3(15, 15, 0.1));
+            const floorBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, -2, 0) });
+            floorBody.addShape(floorShape);
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            world.addBody(floorBody);
 
-                // Start AR - this will trigger camera permission request
-                await mindarThree.start();
-                resetCylinder();
-                
-                // Animation loop
-                const clock = new THREE.Clock();
-                renderer.setAnimationLoop(() => {
-                    const deltaTime = Math.min(clock.getDelta(), 0.1);
-                    world.step(deltaTime);
-                    
-                    // Update cylinder
-                    cylinderMesh.position.copy(cylinderBody.position);
-                    cylinderMesh.quaternion.copy(cylinderBody.quaternion);
-                    
-                    renderer.render(scene, camera);
-                });
+            // Похила площина
+            const inclineAngle = Math.PI / 4;
+            const inclineLength = 15;
+            const inclineWidth = 8;
+            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
+            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0x7BC224 });
+            const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            inclinedPlane.position.set(0, 3, 0);
+            inclinedPlane.rotation.x = -inclineAngle;
+            inclinedPlane.receiveShadow = true;
+            inclinedPlane.castShadow = true;
+            simulationGroup.add(inclinedPlane); // Додаємо до групи
 
-            } catch (error) {
-                console.error("AR Error:", error);
-                document.getElementById("info").textContent = "Error loading AR. Please allow camera access when prompted.";
+            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
+            const planeBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, 3, 0) });
+            planeBody.addShape(planeShape);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
+            world.addBody(planeBody);
+
+            // Циліндр
+            const cylinderRadius = 0.5;
+            const cylinderHeight = 2;
+            const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
+            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
+            cylinder.castShadow = true;
+            cylinder.receiveShadow = true;
+            simulationGroup.add(cylinder); // Додаємо до групи
+
+            // Фізика циліндра
+            const cylinderShape = new CANNON.Cylinder(cylinderRadius, cylinderRadius, cylinderHeight, 12);
+            const cylinderBody = new CANNON.Body({ mass: 5, material: cylinderMaterial });
+            const quaternion = new CANNON.Quaternion();
+            quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), quaternion);
+            world.addBody(cylinderBody);
+
+            function resetCylinder() {
+                cylinderBody.position.set(0, 7, -4);
+                cylinderBody.velocity.set(0, 0, 0);
+                cylinderBody.angularVelocity.set(0, 0, 0);
+                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+                const impulse = new CANNON.Vec3(0, 0, 3);
+                const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
+                cylinderBody.applyImpulse(impulse, worldPoint);
             }
+            resetCylinder();
+
+            // Об'єкти для відладки фізики
+            // ... (код для відладки залишається, але візуальні сітки додаємо до групи)
+            function createDebugMesh(geometry) {
+                 const debugMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+                 const debugMesh = new THREE.Mesh(geometry, debugMaterial);
+                 debugMesh.visible = false;
+                 simulationGroup.add(debugMesh); // Додаємо до групи
+                 return debugMesh;
+            }
+
+            const floorDebug = createDebugMesh(new THREE.BoxGeometry(30, 30, 0.2));
+            const planeDebug = createDebugMesh(new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength));
+            const cylinderDebug = createDebugMesh(new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 12));
+
+            debugObjects.push({ body: floorBody, mesh: floorDebug });
+            debugObjects.push({ body: planeBody, mesh: planeDebug });
+            debugObjects.push({ body: cylinderBody, mesh: cylinderDebug });
+
+            document.getElementById('debugPhysics').addEventListener('change', (e) => {
+                debugObjects.forEach(obj => {
+                    obj.mesh.visible = e.target.checked;
+                });
+            });
+
+            // Скидання симуляції по натисканню на пробіл
+            document.addEventListener('keydown', (event) => {
+                if (event.code === 'Space') {
+                    event.preventDefault();
+                    resetCylinder();
+                }
+            });
+
+            // Крок 4: Запуск MindAR та циклу анімації
+            const clock = new THREE.Clock();
+
+            // Починаємо відстеження. Це асинхронна операція.
+            await mindarThree.start();
+
+            // Використовуємо setAnimationLoop від рендерера MindAR.
+            // Ця функція буде викликатися на кожному кадрі.
+            renderer.setAnimationLoop(() => {
+                const deltaTime = Math.min(clock.getDelta(), 0.1);
+                
+                // Оновлюємо фізичний світ
+                world.step(deltaTime);
+
+                // Оновлюємо позиції візуальних об'єктів відповідно до їхніх фізичних тіл
+                cylinder.position.copy(cylinderBody.position);
+                cylinder.quaternion.copy(cylinderBody.quaternion);
+
+                debugObjects.forEach(obj => {
+                    if (obj.mesh.visible) {
+                        obj.mesh.position.copy(obj.body.position);
+                        obj.mesh.quaternion.copy(obj.body.quaternion);
+                    }
+                });
+
+                // Рендеримо сцену
+                renderer.render(scene, camera);
+            });
         });
     </script>
 </body>
