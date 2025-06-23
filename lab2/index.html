@@ -176,7 +176,7 @@
             
             function updateVector(vector, start, direction) {
                 if (direction.lengthSq() === 0) {
-                    vector.group.visible = false;
+                    vector.group.visible = true;
                     return;
                 }
                 vector.group.visible = document.getElementById('debugVectors').checked;
