@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Final AR Physics Simulation</title>
+    <title>Final AR Physics Simulation with Always-On Vectors</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; }
@@ -17,13 +17,11 @@
 <body>
     <div id="container">
         <div id="info" class="ui-panel">
-            marker
-            https://github.com/KosdiD/labs2025-2sem/blob/main/textures/rslb.jpg<br>
+            Final AR Physics Simulation<br>
             Auto-resets every 7 seconds.
         </div>
         <div id="controls" class="ui-panel">
             <label><input type="checkbox" id="debugPhysics"> Show Physics Debug</label>
-            <label><input type="checkbox" id="debugVectors" checked> Show Force Vectors</label>
         </div>
         <div id="textures" class="ui-panel">
             <label for="floor-texture">Floor Texture:</label>
@@ -66,8 +64,6 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(10, 10, 5);
             directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
             simulationGroup.add(directionalLight);
 
             const world = new CANNON.World();
@@ -97,18 +93,20 @@
 
             // Похила площина
             const inclineAngle = Math.PI / 4;
-            const planeGeometry = new THREE.BoxGeometry(15, 0.2, 8); // Розміри можуть потребувати корекції
+            const inclineLength = 15;
+            const inclineWidth = 8;
+            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
             const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
             const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
             inclinedPlane.position.set(0, 3, 0);
-            inclinedPlane.rotation.z = inclineAngle; // Поворот навколо Z для похилості
+            inclinedPlane.rotation.x = -inclineAngle;
             inclinedPlane.receiveShadow = true;
             inclinedPlane.castShadow = true;
             simulationGroup.add(inclinedPlane);
-            const planeShape = new CANNON.Box(new CANNON.Vec3(7.5, 0.1, 4));
+            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth / 2, 0.1, inclineLength / 2));
             const planeBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, 3, 0) });
             planeBody.addShape(planeShape);
-            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), inclineAngle);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
             world.addBody(planeBody);
 
             // Циліндр
@@ -128,10 +126,13 @@
             world.addBody(cylinderBody);
 
             function resetCylinder() {
-                cylinderBody.position.set(-4, 7, 0); // Оновлено стартову позицію
+                cylinderBody.position.set(0, 7, -4);
                 cylinderBody.velocity.set(0, 0, 0);
                 cylinderBody.angularVelocity.set(0, 0, 0);
-                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI/2);
+                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+                const impulse = new CANNON.Vec3(0, 0, 3);
+                const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
+                cylinderBody.applyImpulse(impulse, worldPoint);
             }
             resetCylinder();
             setInterval(resetCylinder, 7000);
@@ -147,11 +148,9 @@
             const floorSelect = document.getElementById('floor-texture');
             const planeSelect = document.getElementById('plane-texture');
             const cylinderSelect = document.getElementById('cylinder-texture');
-            
             floorSelect.addEventListener('change', () => applyTexture(floor, floorSelect.value));
             planeSelect.addEventListener('change', () => applyTexture(inclinedPlane, planeSelect.value));
             cylinderSelect.addEventListener('change', () => applyTexture(cylinder, cylinderSelect.value));
-            
             applyTexture(floor, floorSelect.value);
             applyTexture(inclinedPlane, planeSelect.value);
             applyTexture(cylinder, cylinderSelect.value);
@@ -169,57 +168,68 @@
                 simulationGroup.add(group);
                 return { group, arrow, line };
             }
-
+            
             vectors.gravity = createVector(0x0000ff);
             vectors.normal = createVector(0x00ff00);
             vectors.friction = createVector(0xffff00);
-            
+            vectors.impulse = createVector(0xff0000);
+
             function updateVector(vector, start, direction) {
                 if (direction.lengthSq() === 0) {
-                    vector.group.visible = true;
+                    vector.group.visible = false;
                     return;
                 }
-                vector.group.visible = document.getElementById('debugVectors').checked;
-                if (!vector.group.visible) return;
-
+                // ЗМІНА: Видалено перевірку чекбокса, вектори тепер завжди видимі
+                vector.group.visible = true; 
+                
                 const positions = vector.line.geometry.attributes.position.array;
                 positions[0] = start.x; positions[1] = start.y; positions[2] = start.z;
                 positions[3] = start.x + direction.x; positions[4] = start.y + direction.y; positions[5] = start.z + direction.z;
                 vector.line.geometry.attributes.position.needsUpdate = true;
-                
                 vector.arrow.position.set(start.x + direction.x, start.y + direction.y, start.z + direction.z);
                 vector.arrow.lookAt(start.x + direction.x * 2, start.y + direction.y * 2, start.z + direction.z * 2);
             }
 
             function updateForceVectors() {
-                const pos = cylinder.position;
+                const pos = cylinder.position.clone();
                 const velocity = cylinderBody.velocity;
                 const mass = cylinderBody.mass;
                 const g = 9.82;
-
-                const gravityVec = new THREE.Vector3(0, -mass * g * 0.1, 0);
-                updateVector(vectors.gravity, pos, gravityVec);
-
-                let hasContact = world.contacts.some(c => c.bi === cylinderBody || c.bj === cylinderBody);
+                
+                const gravityMagnitude = mass * g * 0.1;
+                updateVector(vectors.gravity, pos, new THREE.Vector3(0, -gravityMagnitude, 0));
+                
+                let hasContact = false;
+                for (let i = 0; i < world.contacts.length; i++) {
+                    const contact = world.contacts[i];
+                    if (contact.bi === cylinderBody || contact.bj === cylinderBody) {
+                        hasContact = true;
+                        break;
+                    }
+                }
                 
                 const normalDir = new THREE.Vector3();
                 if (hasContact) {
                     const normalMagnitude = mass * g * 0.1 * Math.cos(inclineAngle);
-                    normalDir.set(Math.sin(inclineAngle) * normalMagnitude, Math.cos(inclineAngle) * normalMagnitude, 0);
+                    normalDir.set(0, normalMagnitude, 0);
+                    normalDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), -inclineAngle);
                 }
                 updateVector(vectors.normal, pos, normalDir);
 
                 const frictionDir = new THREE.Vector3();
                 if (velocity.length() > 0.1 && hasContact) {
-                    frictionDir.copy(velocity).negate().normalize().multiplyScalar(2.0);
+                    frictionDir.set(-velocity.x, -velocity.y, -velocity.z).normalize().multiplyScalar(0.5);
                 }
                 updateVector(vectors.friction, pos, frictionDir);
+                
+                const impulseDir = new THREE.Vector3();
+                if (cylinderBody.position.y > 6.5 && velocity.z > 0.5) {
+                    impulseDir.set(0, 0, 3);
+                }
+                updateVector(vectors.impulse, pos, impulseDir);
             }
             // --- КІНЕЦЬ БЛОКУ ВЕКТОРІВ ---
 
-            document.getElementById('debugPhysics').addEventListener('change', (e) => {
-                 // Тут має бути логіка для показу/приховування сітки фізики, якщо вона потрібна
-            });
             document.addEventListener('keydown', (event) => {
                 if (event.code === 'Space') { event.preventDefault(); resetCylinder(); }
             });
@@ -231,9 +241,7 @@
                 world.step(deltaTime);
                 cylinder.position.copy(cylinderBody.position);
                 cylinder.quaternion.copy(cylinderBody.quaternion);
-
-                updateForceVectors(); // Оновлення векторів
-                
+                updateForceVectors();
                 renderer.render(scene, camera);
             });
         });
