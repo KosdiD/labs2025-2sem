@@ -1,161 +1,228 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Solar System AR (MindAR)</title>
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- MindAR for A-Frame -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System AR (Simplified Physics)</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      .arjs-loader {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: rgba(0, 0, 0, 0.8);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        font-family: Arial;
-      }
-      .arjs-loader div {
-        text-align: center;
-        font-size: 1.25em;
-      }
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
+        .mindar-loader {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: Arial;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .btn {
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
-  </head>
-  <body>
-    <div class="arjs-loader">
-      <div>Loading AR Solar System...</div>
+</head>
+<body>
+    <div class="mindar-loader">
+        <div>Loading Solar System AR...</div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="togglePhysics">Toggle Physics</button>
+        <button class="btn" id="scaleUp">+</button>
+        <button class="btn" id="scaleDown">-</button>
     </div>
 
     <a-scene 
-      mindar-image="imageTargetSrc: ../patterns/target.mind; maxTrack: 1; filterMinCF: 0.001; filterBeta: 0.01;" 
-      embedded 
-      color-space="sRGB" 
-      renderer="colorManagement: true; antialias: true; logarithmicDepthBuffer: true;" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
-      
-      <!-- Assets -->
-      <a-assets>
-        <img id="sun" src="../textures/sun.jpg" crossorigin="anonymous">
-        <img id="mercury" src="../textures/mercury.jpg" crossorigin="anonymous">
-        <img id="venus" src="../textures/venus.jpg" crossorigin="anonymous">
-        <img id="earth" src="../textures/earth.jpg" crossorigin="anonymous">
-        <img id="mars" src="../textures/mars.jpg" crossorigin="anonymous">
-        <img id="jupiter" src="../textures/jupiter.jpg" crossorigin="anonymous">
-        <img id="saturn" src="../textures/saturn.jpg" crossorigin="anonymous">
-        <img id="uranus" src="../textures/uranus.jpg" crossorigin="anonymous">
-        <img id="neptune" src="../textures/neptune.jpg" crossorigin="anonymous">
-      </a-assets>
-
-      <!-- Camera -->
-      <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
-
-      <!-- MindAR Target -->
-      <a-entity mindar-image-target="targetIndex: 0">
-        <!-- Complete Solar System -->
-        <a-entity id="solar-system" scale="0.3 0.3 0.3" rotation="-90 0 0" position="0 0.5 0">
-          <!-- Sun -->
-          <a-sphere src="#sun" radius="0.8" position="0 0 0" 
-              animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
-          </a-sphere>
-          
-          <!-- Mercury -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800">
-            <a-sphere src="#mercury" radius="0.08" position="1.0 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Venus -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500">
-            <a-sphere src="#venus" radius="0.15" position="1.5 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Earth -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500">
-            <a-sphere src="#earth" radius="0.16" position="2.0 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Mars -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 68700">
-            <a-sphere src="#mars" radius="0.09" position="2.5 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Jupiter -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000">
-            <a-sphere src="#jupiter" radius="0.4" position="3.5 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Saturn -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
-            <a-sphere src="#saturn" radius="0.35" position="4.5 0 0"></a-sphere>
-            <a-ring color="#8A7D60" radius-inner="0.4" radius-outer="0.55" rotation="90 0 0"></a-ring>
-          </a-entity>
-          
-          <!-- Uranus -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000">
-            <a-sphere src="#uranus" radius="0.25" position="5.5 0 0"></a-sphere>
-          </a-entity>
-          
-          <!-- Neptune -->
-          <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000">
-            <a-sphere src="#neptune" radius="0.24" position="6.5 0 0"></a-sphere>
-          </a-entity>
-        </a-entity>
+        mindar-image="imageTargetSrc: ../patterns/target.mind; maxTrack: 1;" 
+        embedded 
+        renderer="colorManagement: true; antialias: true;">
         
-        <!-- Lighting -->
-        <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
-        <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="1 1 1"></a-entity>
-      </a-entity>
+        <a-assets>
+            <img id="sun" src="../textures/sun.jpg" crossorigin="anonymous">
+            <img id="mercury" src="../textures/mercury.jpg" crossorigin="anonymous">
+            <img id="venus" src="../textures/venus.jpg" crossorigin="anonymous">
+            <img id="earth" src="../textures/earth.jpg" crossorigin="anonymous">
+            <img id="mars" src="../textures/mars.jpg" crossorigin="anonymous">
+            <img id="jupiter" src="../textures/jupiter.jpg" crossorigin="anonymous">
+            <img id="saturn" src="../textures/saturn.jpg" crossorigin="anonymous">
+            <img id="uranus" src="../textures/uranus.jpg" crossorigin="anonymous">
+            <img id="neptune" src="../textures/neptune.jpg" crossorigin="anonymous">
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-entity id="solar-system" scale="0.05 0.05 0.05" position="0 0.5 0">
+                <!-- Sun -->
+                <a-sphere id="sun" radius="1.5" position="0 0 0" 
+                    material="src: #sun; shader: flat; emissive: #ffff80; emissiveIntensity: 0.5"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
+                </a-sphere>
+
+                <!-- Planets with simplified physics -->
+                <a-entity id="mercury" class="planet" position="3 0 0" radius="0.3" 
+                    planet="mass: 1; distance: 3; speed: 0.02" material="src: #mercury">
+                    <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="venus" class="planet" position="4 0 0" radius="0.4" 
+                    planet="mass: 2; distance: 4; speed: 0.015" material="src: #venus">
+                    <a-animation attribute="rotation" to="0 360 0" dur="15000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="earth" class="planet" position="5 0 0" radius="0.4" 
+                    planet="mass: 2; distance: 5; speed: 0.01" material="src: #earth">
+                    <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="mars" class="planet" position="6 0 0" radius="0.35" 
+                    planet="mass: 1; distance: 6; speed: 0.008" material="src: #mars">
+                    <a-animation attribute="rotation" to="0 360 0" dur="12000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="jupiter" class="planet" position="8 0 0" radius="0.8" 
+                    planet="mass: 10; distance: 8; speed: 0.005" material="src: #jupiter">
+                    <a-animation attribute="rotation" to="0 360 0" dur="9000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="saturn" class="planet" position="10 0 0" radius="0.7" 
+                    planet="mass: 8; distance: 10; speed: 0.004" material="src: #saturn">
+                    <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
+                    <a-ring color="#D4AF37" radius-inner="0.9" radius-outer="1.2" rotation="90 0 0"></a-ring>
+                </a-entity>
+                
+                <a-entity id="uranus" class="planet" position="12 0 0" radius="0.6" 
+                    planet="mass: 6; distance: 12; speed: 0.003" material="src: #uranus">
+                    <a-animation attribute="rotation" to="0 360 0" dur="11000" repeat="indefinite"></a-animation>
+                </a-entity>
+                
+                <a-entity id="neptune" class="planet" position="14 0 0" radius="0.6" 
+                    planet="mass: 6; distance: 14; speed: 0.002" material="src: #neptune">
+                    <a-animation attribute="rotation" to="0 360 0" dur="12000" repeat="indefinite"></a-animation>
+                </a-entity>
+            </a-entity>
+            
+            <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="1 1 1"></a-entity>
+        </a-entity>
     </a-scene>
 
     <script>
-      // Hide loader when scene is ready
-      document.querySelector('a-scene').addEventListener('loaded', function() {
-        setTimeout(function() {
-          var loader = document.querySelector('.arjs-loader');
-          loader.style.display = 'none';
-        }, 1500);
-      });
-
-      // Optional: Add scale controls
-      document.addEventListener("DOMContentLoaded", function() {
-        const solarSystem = document.getElementById('solar-system');
-        let scale = 0.3;
-        
-        function updateScale() {
-          solarSystem.setAttribute('scale', `${scale} ${scale} ${scale}`);
-        }
-        
-        document.addEventListener('keydown', function(e) {
-          if (e.key === '+' || e.key === '=') {
-            scale *= 1.2;
-            if (scale > 1.0) scale = 1.0;
-            updateScale();
-          } else if (e.key === '-' || e.key === '_') {
-            scale /= 1.2;
-            if (scale < 0.1) scale = 0.1;
-            updateScale();
-          }
+        // Hide loader when scene is ready
+        document.querySelector('a-scene').addEventListener('loaded', function() {
+            setTimeout(function() {
+                document.querySelector('.mindar-loader').style.display = 'none';
+            }, 1000);
         });
-      });
 
-      // Simple gravitational simulation (optional)
-      AFRAME.registerComponent('planet-physics', {
-        tick: function() {
-          // Basic orbital animation could be enhanced with physics here
-        }
-      });
+        // Simplified Physics Component
+        AFRAME.registerComponent('planet', {
+            schema: {
+                mass: { type: 'number', default: 1 },
+                distance: { type: 'number', default: 1 },
+                speed: { type: 'number', default: 0.01 }
+            },
+            
+            init: function() {
+                this.angle = 0;
+                this.initialPos = this.el.getAttribute('position').clone();
+                this.physicsEnabled = false;
+            },
+            
+            updatePhysics: function() {
+                if (!this.physicsEnabled) return;
+                
+                this.angle += this.data.speed;
+                const x = Math.cos(this.angle) * this.data.distance;
+                const z = Math.sin(this.angle) * this.data.distance;
+                
+                this.el.setAttribute('position', {
+                    x: x,
+                    y: this.initialPos.y,
+                    z: z
+                });
+            },
+            
+            tick: function() {
+                this.updatePhysics();
+            }
+        });
+
+        // Physics Controller
+        AFRAME.registerComponent('physics-controller', {
+            init: function() {
+                this.planets = document.querySelectorAll('.planet');
+                this.physicsEnabled = false;
+                
+                document.getElementById('togglePhysics').addEventListener('click', () => {
+                    this.togglePhysics();
+                });
+            },
+            
+            togglePhysics: function() {
+                this.physicsEnabled = !this.physicsEnabled;
+                
+                this.planets.forEach(planet => {
+                    const planetComp = planet.components.planet;
+                    if (planetComp) {
+                        planetComp.physicsEnabled = this.physicsEnabled;
+                        
+                        // Reset position when turning off physics
+                        if (!this.physicsEnabled) {
+                            planet.setAttribute('position', planetComp.initialPos);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Scale Controls
+        document.addEventListener("DOMContentLoaded", function() {
+            const solarSystem = document.getElementById('solar-system');
+            let scale = 0.05;
+            
+            function updateScale() {
+                solarSystem.setAttribute('scale', `${scale} ${scale} ${scale}`);
+            }
+            
+            document.getElementById('scaleUp').addEventListener('click', function() {
+                scale *= 1.2;
+                if (scale > 0.2) scale = 0.2;
+                updateScale();
+            });
+            
+            document.getElementById('scaleDown').addEventListener('click', function() {
+                scale /= 1.2;
+                if (scale < 0.01) scale = 0.01;
+                updateScale();
+            });
+        });
+
+        // Add physics controller to scene
+        document.querySelector('a-scene').setAttribute('physics-controller', '');
     </script>
-  </body>
+</body>
 </html>
