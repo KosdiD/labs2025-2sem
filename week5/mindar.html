@@ -3,13 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar System with MindAR (Fixed)</title>
-    <!-- Підключаємо A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- ЗМІНА: Повернення до стабільної версії MindAR -->
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mind-ar-aframe.prod.js"></script>
+    <title>Solar System AR</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        .loader {
+        .arjs-loader {
             position: absolute;
             top: 0;
             left: 0;
@@ -20,114 +18,93 @@
             justify-content: center;
             align-items: center;
             color: white;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial;
             z-index: 1000;
+        }
+        body {
+            margin: 0;
+            overflow: hidden;
         }
     </style>
 </head>
-<body style="margin: 0; overflow: hidden;">
-    <div class="loader">
-        <div>Loading AR Solar System... Point camera at the marker.</div>
+<body>
+    <div class="arjs-loader">
+        <div>Loading AR Solar System...</div>
     </div>
 
-    <!-- ЗМІНА: Виправлено налаштування рендерера для сумісності -->
-    <a-scene mindar-image="imageTargetSrc: ../patterns/target.mind; uiLoading: no; uiScanning: no;" 
-             color-space="sRGB" 
-             renderer="colorManagement: true, logDepthBuffer: true;" 
-             vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
-        
+    <a-scene mindar-image="imageTargetSrc: ../patterns/target.mind;" vr-mode-ui="enabled: false" embedded renderer="colorManagement: true; physicallyCorrectLights: true;">
         <a-assets>
-            <!-- ЗМІНА: Додано атрибут crossorigin="anonymous" для всіх текстур -->
-            <img id="sun" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/sun.jpg" crossorigin="anonymous">
-            <img id="mercury" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mercury.jpg" crossorigin="anonymous">
-            <img id="venus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/venus.jpg" crossorigin="anonymous">
-            <img id="earth" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/earth.jpg" crossorigin="anonymous">
-            <img id="mars" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mars.jpg" crossorigin="anonymous">
-            <img id="jupiter" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/jupiter.jpg" crossorigin="anonymous">
-            <img id="saturn" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/saturn.jpg" crossorigin="anonymous">
-            <img id="uranus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/uranus.jpg" crossorigin="anonymous">
-            <img id="neptune" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/neptune.jpg" crossorigin="anonymous">
+            <!-- Textures -->
+            <img id="sun" src="../textures/sun.jpg">
+            <img id="mercury" src="../textures/mercury.jpg">
+            <img id="venus" src="../textures/venus.jpg">
+            <img id="earth" src="../textures/earth.jpg">
+            <img id="mars" src="../textures/mars.jpg">
+            <img id="jupiter" src="../textures/jupiter.jpg">
+            <img id="saturn" src="../textures/saturn.jpg">
+            <img id="uranus" src="../textures/uranus.jpg">
+            <img id="neptune" src="../textures/neptune.jpg">
         </a-assets>
 
-        <!-- Камера, якою керує MindAR -->
-        <a-camera position="0 0 0" look-controls="enabled: false">
-            <!-- Діагностичний куб залишено для перевірки -->
-            <a-box color="red" scale="0.05 0.05 0.05" position="0 -0.25 -0.5" visible="true"></a-box>
-        </a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- 'targetIndex: 0' прив'язує контент до першого зображення у файлі target.mind. -->
-        <a-entity mindar-image-target="targetIndex: 0" id="ar-target">
-            <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0">
+        <!-- MindAR Target -->
+        <a-entity mindar-image-target="targetIndex: 0">
+            <!-- Complete Solar System -->
+            <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0" position="0 0.5 0">
                 <!-- Sun -->
                 <a-sphere src="#sun" radius="0.8" position="0 0 0" 
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 30000; easing: linear;">
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
                 </a-sphere>
                 
-                <!-- Mercury -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800; easing: linear;">
+                <!-- All planets in one view -->
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800">
                     <a-sphere src="#mercury" radius="0.08" position="1.0 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Venus -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500">
                     <a-sphere src="#venus" radius="0.15" position="1.5 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Earth -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500">
                     <a-sphere src="#earth" radius="0.16" position="2.0 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Mars -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 68700; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 68700">
                     <a-sphere src="#mars" radius="0.09" position="2.5 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Jupiter -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000">
                     <a-sphere src="#jupiter" radius="0.4" position="3.5 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Saturn -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear;">
-                    <a-entity position="4.5 0 0">
-                        <a-sphere src="#saturn" radius="0.35"></a-sphere>
-                        <a-torus color="#8A7D60" radius="0.55" radius-tubular="0.05" rotation="90 0 0"></a-torus>
-                    </a-entity>
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
+                    <a-sphere src="#saturn" radius="0.35" position="4.5 0 0"></a-sphere>
+                    <a-ring color="#8A7D60" radius-inner="0.4" radius-outer="0.55" rotation="90 0 0"></a-ring>
                 </a-entity>
-                
-                <!-- Uranus -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000">
                     <a-sphere src="#uranus" radius="0.25" position="5.5 0 0"></a-sphere>
                 </a-entity>
-                
-                <!-- Neptune -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000; easing: linear;">
+                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000">
                     <a-sphere src="#neptune" radius="0.24" position="6.5 0 0"></a-sphere>
                 </a-entity>
             </a-entity>
+            
+            <!-- Lighting -->
+            <a-entity light="type: ambient; color: #FFF; intensity: 0.5"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="1 1 1"></a-entity>
         </a-entity>
     </a-scene>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sceneEl = document.querySelector('a-scene');
-            const loader = document.querySelector('.loader');
-            const target = document.querySelector('#ar-target');
+        // Hide loader when scene is ready
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var loader = document.querySelector('.arjs-loader');
+                loader.style.display = 'none';
+            }, 1500);
+        });
 
-            sceneEl.addEventListener('renderstart', () => {
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                }, 500);
-            });
-            
-            target.addEventListener("targetFound", event => {
-                console.log("Marker Found!");
-            });
-            target.addEventListener("targetLost", event => {
-                console.log("Marker Lost!");
-            });
+        // Simple gravitational simulation (optional)
+        AFRAME.registerComponent('planet-physics', {
+            tick: function() {
+                // Basic orbital animation could be enhanced with physics here
+            }
         });
     </script>
 </body>
