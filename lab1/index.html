@@ -2,176 +2,74 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar System AR with Physics</title>
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>Rolling Cylinder with CANNON Physics</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.3/dist/aframe-physics-system.min.js"></script>
-    <style>
-        .arjs-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-family: Arial;
-            z-index: 1000;
-        }
-    </style>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-    <div class="arjs-loader">
-        <div>Loading AR Solar System with Physics...</div>
-    </div>
-
+<body>
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" physics="debug: true">
-        <a-assets>
-            <!-- Textures -->
-            <img id="sun" src="../textures/sun.jpg">
-            <img id="mercury" src="../textures/mercury.jpg">
-            <img id="venus" src="../textures/venus.jpg">
-            <img id="earth" src="../textures/earth.jpg">
-            <img id="mars" src="../textures/mars.jpg">
-            <img id="jupiter" src="../textures/jupiter.jpg">
-            <img id="saturn" src="../textures/saturn.jpg">
-            <img id="uranus" src="../textures/uranus.jpg">
-            <img id="neptune" src="../textures/neptune.jpg">
-        </a-assets>
-
-        <!-- Hiro Marker (Sun + Inner Planets) -->
-        <a-marker preset="hiro">
-            <a-entity scale="0.5 0.5 0.5" rotation="-90 0 0">
-                <!-- Sun -->
-                <a-sphere src="#sun" radius="0.5" position="0 0 0" 
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
-                </a-sphere>
-                
-                <!-- Mercury -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800">
-                    <a-sphere src="#mercury" radius="0.05" position="0.8 0 0"></a-sphere>
-                </a-entity>
-                
-                <!-- Venus -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500">
-                    <a-sphere src="#venus" radius="0.12" position="1.2 0 0"></a-sphere>
-                </a-entity>
-                
-                <!-- Earth -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500">
-                    <a-sphere src="#earth" radius="0.13" position="1.6 0 0"></a-sphere>
-                </a-entity>
-                
-                <!-- Mars -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 68700">
-                    <a-sphere src="#mars" radius="0.07" position="2.0 0 0"></a-sphere>
-                </a-entity>
-            </a-entity>
-        </a-marker>
-
-        <!-- Kanji Marker (Gas Giants) -->
-        <a-marker preset="kanji">
-            <a-entity scale="0.5 0.5 0.5" rotation="-90 0 0">
-                <!-- Jupiter -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000">
-                    <a-sphere src="#jupiter" radius="0.3" position="1.0 0 0"></a-sphere>
-                </a-entity>
-                
-                <!-- Saturn -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
-                    <a-sphere src="#saturn" radius="0.25" position="1.8 0 0"></a-sphere>
-                    <a-ring color="#8A7D60" radius-inner="0.3" radius-outer="0.4" rotation="90 0 0"></a-ring>
-                </a-entity>
-                
-                <!-- Uranus -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000">
-                    <a-sphere src="#uranus" radius="0.2" position="2.5 0 0"></a-sphere>
-                </a-entity>
-                
-                <!-- Neptune -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000">
-                    <a-sphere src="#neptune" radius="0.19" position="3.0 0 0"></a-sphere>
-                </a-entity>
-            </a-entity>
-        </a-marker>
-
-        <!-- Jupiter Pattern Marker (Physics Demo) -->
+        
+        <!-- Jupiter Pattern Marker -->
         <a-marker type="pattern" url="../patterns/pattern-jup.patt">
-            <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0">
-                <!-- Physics Scene -->
-                <a-plane static-body position="0 0 0" rotation="-90 0 0" width="20" height="20" color="#7BC8A4"></a-plane>
-                <a-plane static-body position="0 5 0" rotation="-45 0 0" width="10" height="80" color="#7BC224"></a-plane>
-                
-                <!-- Cycling Cylinder -->
-                <a-cylinder id="rollingCylinder"
-                    position="0 35 -10"
-                    radius="0.5"
-                    height="2"
-                    color="red"
-                    rotation="0 0 90"
-                    dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
-                </a-cylinder>
-            </a-entity>
-        </a-marker>
+            <!-- Camera -->
+            <a-entity camera position="0 5 15" look-controls></a-entity>
+            
+            <!-- Floor -->
+            <a-plane static-body 
+                     position="0 0 0" 
+                     rotation="-90 0 0" 
+                     width="20" 
+                     height="20" 
+                     color="#7BC8A4">
+            </a-plane>
+            
+            <!-- Sloped Plane -->
+            <a-plane static-body 
+                     position="0 5 0" 
+                     rotation="-45 0 0" 
+                     width="10" 
+                     height="80" 
+                     color="#7BC224">
+            </a-plane>
+            
+            <!-- Dynamic Cylinder -->
+            <a-cylinder 
+                id="rollingCylinder"
+                position="0 35 -10"
+                radius="0.5"
+                height="2"
+                color="red"
+                rotation="0 0 90"
+                dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
+            </a-cylinder>
 
-        <!-- Custom Pattern Marker (Complete Solar System) -->
-        <a-marker type="pattern" url="../patterns/solar-system.patt">
-            <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0">
-                <!-- Sun -->
-                <a-sphere src="#sun" radius="0.8" position="0 0 0" 
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 30000">
-                </a-sphere>
-                
-                <!-- All planets in one view -->
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800">
-                    <a-sphere src="#mercury" radius="0.08" position="1.0 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500">
-                    <a-sphere src="#venus" radius="0.15" position="1.5 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500">
-                    <a-sphere src="#earth" radius="0.16" position="2.0 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 68700">
-                    <a-sphere src="#mars" radius="0.09" position="2.5 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000">
-                    <a-sphere src="#jupiter" radius="0.4" position="3.5 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000">
-                    <a-sphere src="#saturn" radius="0.35" position="4.5 0 0"></a-sphere>
-                    <a-ring color="#8A7D60" radius-inner="0.4" radius-outer="0.55" rotation="90 0 0"></a-ring>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000">
-                    <a-sphere src="#uranus" radius="0.25" position="5.5 0 0"></a-sphere>
-                </a-entity>
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000">
-                    <a-sphere src="#neptune" radius="0.24" position="6.5 0 0"></a-sphere>
-                </a-entity>
-            </a-entity>
+            <!-- Force Vectors -->
+            <a-entity id="gravityVector" line="start: 0 0 0; end: 0 -2 0; color: blue" visible="false"></a-entity>
+            <a-cone id="gravityArrow" position="0 -2 0" radius-bottom="0.1" radius-top="0" height="0.3" color="blue" visible="false"></a-cone>
+            <a-text id="gravityLabel" value="Gravity" position="0 -2.5 0" align="center" color="blue" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="normalVector" line="start: 0 0 0; end: 0 0 0; color: green" visible="false"></a-entity>
+            <a-cone id="normalArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="green" visible="false"></a-cone>
+            <a-text id="normalLabel" value="Normal" position="0 0 0" align="center" color="green" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="frictionVector" line="start: 0 0 0; end: 0 0 0; color: yellow" visible="false"></a-entity>
+            <a-cone id="frictionArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="yellow" visible="false"></a-cone>
+            <a-text id="frictionLabel" value="Friction" position="0 0 0" align="center" color="yellow" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="impulseVector" line="start: 0 0 0; end: 0 0 0; color: red" visible="false"></a-entity>
+            <a-cone id="impulseArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="red" visible="false"></a-cone>
+            <a-text id="impulseLabel" value="Impulse" position="0 0 0" align="center" color="red" scale="0.5 0.5 0.5" visible="false"></a-text>
         </a-marker>
-
-        <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        // Hide loader when scene is ready
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                var loader = document.querySelector('.arjs-loader');
-                loader.style.display = 'none';
-            }, 1500);
-        });
-
-        // Cylinder physics and cycling animation
-        AFRAME.registerComponent('cylinder-physics', {
+        // Apply impulse on start and reset every 7 seconds
+        AFRAME.registerComponent('cylinder-controls', {
             init: function () {
                 this.cylinder = document.querySelector('#rollingCylinder');
                 this.initialPosition = {x: 0, y: 35, z: -10};
+                this.initialRotation = {x: 0, y: 0, z: 90};
                 this.lastReset = Date.now();
                 
                 this.cylinder.addEventListener('body-loaded', () => {
@@ -185,28 +83,127 @@
                 this.cylinder.body.applyImpulse(impulse, worldPoint);
             },
             
+            resetCylinder: function() {
+                this.cylinder.body.position.set(
+                    this.initialPosition.x,
+                    this.initialPosition.y,
+                    this.initialPosition.z
+                );
+                this.cylinder.body.velocity.set(0, 0, 0);
+                this.cylinder.body.angularVelocity.set(0, 0, 0);
+                this.cylinder.setAttribute('rotation', this.initialRotation);
+                this.applyImpulse();
+                this.lastReset = Date.now();
+            },
+            
             tick: function () {
                 if (!this.cylinder.body) return;
                 
                 // Reset cylinder every 7 seconds
                 const now = Date.now();
                 if (now - this.lastReset > 7000) {
-                    this.cylinder.body.position.set(
-                        this.initialPosition.x,
-                        this.initialPosition.y,
-                        this.initialPosition.z
-                    );
-                    this.cylinder.body.velocity.set(0, 0, 0);
-                    this.cylinder.body.angularVelocity.set(0, 0, 0);
-                    this.applyImpulse();
-                    this.lastReset = now;
+                    this.resetCylinder();
+                }
+            }
+        });
+
+        // Force vectors component
+        AFRAME.registerComponent('force-vectors', {
+            init: function () {
+                this.cylinder = document.querySelector('#rollingCylinder');
+                this.gravityVector = document.querySelector('#gravityVector');
+                this.gravityArrow = document.querySelector('#gravityArrow');
+                this.gravityLabel = document.querySelector('#gravityLabel');
+                this.normalVector = document.querySelector('#normalVector');
+                this.normalArrow = document.querySelector('#normalArrow');
+                this.normalLabel = document.querySelector('#normalLabel');
+                this.frictionVector = document.querySelector('#frictionVector');
+                this.frictionArrow = document.querySelector('#frictionArrow');
+                this.frictionLabel = document.querySelector('#frictionLabel');
+                this.impulseVector = document.querySelector('#impulseVector');
+                this.impulseArrow = document.querySelector('#impulseArrow');
+                this.impulseLabel = document.querySelector('#impulseLabel');
+                
+                this.cylinder.addEventListener('body-loaded', () => {
+                    this.gravityVector.setAttribute('visible', true);
+                    this.gravityArrow.setAttribute('visible', true);
+                    this.gravityLabel.setAttribute('visible', true);
+                    this.normalVector.setAttribute('visible', true);
+                    this.normalArrow.setAttribute('visible', true);
+                    this.normalLabel.setAttribute('visible', true);
+                    this.frictionVector.setAttribute('visible', true);
+                    this.frictionArrow.setAttribute('visible', true);
+                    this.frictionLabel.setAttribute('visible', true);
+                    this.impulseVector.setAttribute('visible', true);
+                    this.impulseArrow.setAttribute('visible', true);
+                    this.impulseLabel.setAttribute('visible', true);
+                });
+            },
+            
+            tick: function () {
+                if (!this.cylinder.body) return;
+                
+                const pos = this.cylinder.getAttribute('position');
+                const body = this.cylinder.body;
+                const mass = body.mass;
+                const g = 9.82;
+                
+                // Gravity
+                const gravityEnd = {x: pos.x, y: pos.y - mass * g * 0.1, z: pos.z};
+                this.gravityVector.setAttribute('line', {
+                    start: `${pos.x} ${pos.y} ${pos.z}`,
+                    end: `${gravityEnd.x} ${gravityEnd.y} ${gravityEnd.z}`
+                });
+                this.gravityArrow.setAttribute('position', gravityEnd);
+                this.gravityLabel.setAttribute('position', `${gravityEnd.x} ${gravityEnd.y - 0.5} ${gravityEnd.z}`);
+                
+                // Normal force
+                if (pos.y <= 0.5) {
+                    const normalEnd = {x: pos.x, y: pos.y + mass * g * 0.1, z: pos.z};
+                    this.normalVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${normalEnd.x} ${normalEnd.y} ${normalEnd.z}`
+                    });
+                    this.normalArrow.setAttribute('position', normalEnd);
+                    this.normalArrow.setAttribute('rotation', '180 0 0');
+                    this.normalLabel.setAttribute('position', `${normalEnd.x} ${normalEnd.y + 0.5} ${normalEnd.z}`);
+                }
+                
+                // Friction force
+                const velocity = body.velocity;
+                if (velocity.length() > 0.1) {
+                    const frictionDirX = -velocity.x * 0.5 / velocity.length();
+                    const frictionDirY = -velocity.y * 0.5 / velocity.length();
+                    const frictionDirZ = -velocity.z * 0.5 / velocity.length();
+                    const frictionEnd = {x: pos.x + frictionDirX, y: pos.y + frictionDirY, z: pos.z + frictionDirZ};
+                    this.frictionVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${frictionEnd.x} ${frictionEnd.y} ${frictionEnd.z}`
+                    });
+                    this.frictionArrow.setAttribute('position', frictionEnd);
+                    const angle = Math.atan2(frictionDirX, -frictionDirZ) * 180 / Math.PI;
+                    this.frictionArrow.setAttribute('rotation', `0 ${angle} 90`);
+                    this.frictionLabel.setAttribute('position', `${frictionEnd.x} ${frictionEnd.y + 0.5} ${frictionEnd.z}`);
+                }
+                
+                // Impulse
+                if (body.velocity.z > 0.1) {
+                    const impulseEnd = {x: pos.x, y: pos.y, z: pos.z + 1};
+                    this.impulseVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${impulseEnd.x} ${impulseEnd.y} ${impulseEnd.z}`
+                    });
+                    this.impulseArrow.setAttribute('position', impulseEnd);
+                    this.impulseArrow.setAttribute('rotation', '90 0 0');
+                    this.impulseLabel.setAttribute('position', `${impulseEnd.x} ${impulseEnd.y + 0.5} ${impulseEnd.z}`);
                 }
             }
         });
 
         // Initialize components
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelector('a-scene').setAttribute('cylinder-physics', '');
+            document.querySelector('a-scene').setAttribute('cylinder-controls', '');
+            document.querySelector('a-scene').setAttribute('force-vectors', '');
         });
     </script>
 </body>
