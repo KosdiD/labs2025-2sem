@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Advanced AR Physics Simulation</title>
+    <title>Final AR Physics Simulation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
         body { margin: 0; font-family: Arial, sans-serif; overflow: hidden; }
@@ -17,9 +17,9 @@
 <body>
     <div id="container">
         <div id="info" class="ui-panel">
-            Advanced AR Physics Simulation<br>
-            Auto-resets every 7 seconds.<br>
-            Use controls to change textures.
+            marker
+            https://github.com/KosdiD/labs2025-2sem/blob/main/textures/rslb.jpg<br>
+            Auto-resets every 7 seconds.
         </div>
         <div id="controls" class="ui-panel">
             <label><input type="checkbox" id="debugPhysics"> Show Physics Debug</label>
@@ -80,12 +80,11 @@
             const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, { friction: 0.4, restitution: 0.1 });
             world.addContactMaterial(contactMaterial);
 
-            // НОВА ЗМІНА: Створюємо один завантажувач текстур для всього проекту
             const textureLoader = new THREE.TextureLoader();
 
             // Підлога
             const floorGeometry = new THREE.PlaneGeometry(30, 30);
-            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
+            const floorMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
             floor.position.y = -2;
@@ -98,27 +97,25 @@
 
             // Похила площина
             const inclineAngle = Math.PI / 4;
-            const inclineLength = 15;
-            const inclineWidth = 8;
-            const planeGeometry = new THREE.BoxGeometry(inclineWidth, 0.2, inclineLength);
-            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
+            const planeGeometry = new THREE.BoxGeometry(15, 0.2, 8); // Розміри можуть потребувати корекції
+            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
             const inclinedPlane = new THREE.Mesh(planeGeometry, planeMaterial);
             inclinedPlane.position.set(0, 3, 0);
-            inclinedPlane.rotation.x = -inclineAngle;
+            inclinedPlane.rotation.z = inclineAngle; // Поворот навколо Z для похилості
             inclinedPlane.receiveShadow = true;
             inclinedPlane.castShadow = true;
             simulationGroup.add(inclinedPlane);
-            const planeShape = new CANNON.Box(new CANNON.Vec3(inclineWidth/2, 0.1, inclineLength/2));
+            const planeShape = new CANNON.Box(new CANNON.Vec3(7.5, 0.1, 4));
             const planeBody = new CANNON.Body({ mass: 0, material: groundMaterial, position: new CANNON.Vec3(0, 3, 0) });
             planeBody.addShape(planeShape);
-            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -inclineAngle);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), inclineAngle);
             world.addBody(planeBody);
 
             // Циліндр
             const cylinderRadius = 0.5;
             const cylinderHeight = 2;
             const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32);
-            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // Початковий колір
+            const cylinderMaterialThree = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
             const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterialThree);
             cylinder.castShadow = true;
             cylinder.receiveShadow = true;
@@ -131,22 +128,18 @@
             world.addBody(cylinderBody);
 
             function resetCylinder() {
-                cylinderBody.position.set(0, 7, -4);
+                cylinderBody.position.set(-4, 7, 0); // Оновлено стартову позицію
                 cylinderBody.velocity.set(0, 0, 0);
                 cylinderBody.angularVelocity.set(0, 0, 0);
-                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-                const impulse = new CANNON.Vec3(0, 0, 3);
-                const worldPoint = new CANNON.Vec3().copy(cylinderBody.position);
-                cylinderBody.applyImpulse(impulse, worldPoint);
+                cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI/2);
             }
             resetCylinder();
             setInterval(resetCylinder, 7000);
 
-            // НОВА ЗМІНА: Логіка для зміни текстур
             function applyTexture(mesh, textureUrl) {
                 textureLoader.load(textureUrl, (texture) => {
                     mesh.material.map = texture;
-                    mesh.material.color.set(0xffffff); // Скидаємо колір, щоб текстура відображалася чисто
+                    mesh.material.color.set(0xffffff);
                     mesh.material.needsUpdate = true;
                 });
             }
@@ -154,19 +147,17 @@
             const floorSelect = document.getElementById('floor-texture');
             const planeSelect = document.getElementById('plane-texture');
             const cylinderSelect = document.getElementById('cylinder-texture');
-
+            
             floorSelect.addEventListener('change', () => applyTexture(floor, floorSelect.value));
             planeSelect.addEventListener('change', () => applyTexture(inclinedPlane, planeSelect.value));
             cylinderSelect.addEventListener('change', () => applyTexture(cylinder, cylinderSelect.value));
-
-            // Застосовуємо текстури за замовчуванням при старті
+            
             applyTexture(floor, floorSelect.value);
             applyTexture(inclinedPlane, planeSelect.value);
             applyTexture(cylinder, cylinderSelect.value);
 
-
-            // НОВА ЗМІНА: Весь блок для налаштування та оновлення векторів сил
-            const vectors = {}; // Ініціалізуємо тут, щоб мати доступ до createVector
+            // --- БЛОК ВІЗУАЛІЗАЦІЇ ВЕКТОРІВ СИЛ ---
+            const vectors = {}; 
             
             function createVector(color) {
                 const group = new THREE.Group();
@@ -175,15 +166,13 @@
                 lineGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(6), 3));
                 const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color, linewidth: 3 }));
                 group.add(arrow, line);
-                simulationGroup.add(group); // ВАЖЛИВО: Додаємо до групи симуляції
+                simulationGroup.add(group);
                 return { group, arrow, line };
             }
 
-            // Ініціалізація векторів
             vectors.gravity = createVector(0x0000ff);
             vectors.normal = createVector(0x00ff00);
             vectors.friction = createVector(0xffff00);
-            vectors.impulse = createVector(0xff0000);
             
             function updateVector(vector, start, direction) {
                 if (direction.lengthSq() === 0) {
@@ -208,47 +197,33 @@
                 const mass = cylinderBody.mass;
                 const g = 9.82;
 
-                // Гравітація
                 const gravityVec = new THREE.Vector3(0, -mass * g * 0.1, 0);
                 updateVector(vectors.gravity, pos, gravityVec);
 
-                // Перевірка контакту
                 let hasContact = world.contacts.some(c => c.bi === cylinderBody || c.bj === cylinderBody);
                 
-                // Нормальна сила
                 const normalDir = new THREE.Vector3();
                 if (hasContact) {
                     const normalMagnitude = mass * g * 0.1 * Math.cos(inclineAngle);
-                    normalDir.set(0, normalMagnitude, 0).applyAxisAngle(new THREE.Vector3(1, 0, 0), -inclineAngle);
+                    normalDir.set(Math.sin(inclineAngle) * normalMagnitude, Math.cos(inclineAngle) * normalMagnitude, 0);
                 }
                 updateVector(vectors.normal, pos, normalDir);
 
-                // Сила тертя
                 const frictionDir = new THREE.Vector3();
                 if (velocity.length() > 0.1 && hasContact) {
-                    frictionDir.set(-velocity.x, -velocity.y, -velocity.z).normalize().multiplyScalar(2.0);
+                    frictionDir.copy(velocity).negate().normalize().multiplyScalar(2.0);
                 }
                 updateVector(vectors.friction, pos, frictionDir);
-
-                // Імпульс (показуємо коротко на старті)
-                const impulseDir = new THREE.Vector3();
-                if (world.time < 0.2) { // Показуємо тільки на початку
-                    impulseDir.set(0, 0, 5);
-                }
-                updateVector(vectors.impulse, pos, impulseDir);
             }
-            
-            // Налаштування відладки (перенесено для доступу до debugVectors)
-            const debugObjects = [];
-            // ... (код для відладки фізики, він не змінився)
+            // --- КІНЕЦЬ БЛОКУ ВЕКТОРІВ ---
+
             document.getElementById('debugPhysics').addEventListener('change', (e) => {
-                 debugObjects.forEach(obj => { obj.mesh.visible = e.target.checked; });
+                 // Тут має бути логіка для показу/приховування сітки фізики, якщо вона потрібна
             });
             document.addEventListener('keydown', (event) => {
                 if (event.code === 'Space') { event.preventDefault(); resetCylinder(); }
             });
 
-            // Запуск MindAR та циклу анімації
             const clock = new THREE.Clock();
             await mindarThree.start();
             renderer.setAnimationLoop(() => {
@@ -257,8 +232,7 @@
                 cylinder.position.copy(cylinderBody.position);
                 cylinder.quaternion.copy(cylinderBody.quaternion);
 
-                // НОВА ЗМІНА: Оновлюємо вектори в кожному кадрі
-                updateForceVectors();
+                updateForceVectors(); // Оновлення векторів
                 
                 renderer.render(scene, camera);
             });
