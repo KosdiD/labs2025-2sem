@@ -65,18 +65,18 @@
     <button id="start-button">Start AR Experience</button>
     <div id="mindar-container"></div>
 
-    <!-- Load Three.js and Cannon.js only once -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
+    <!-- Load MindAR first which includes Three.js -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
     
     <script>
-        // Declare variables at the top level
+        // Declare all variables at the top level
         let mindarThree;
         let cylinderBody, cylinderMesh;
         let lastResetTime = Date.now();
         const resetInterval = 7000; // 7 seconds
         const clock = new THREE.Clock();
+        let groundMaterial, cylinderMaterial;
 
         document.getElementById('start-button').addEventListener('click', async () => {
             document.getElementById('start-button').style.display = 'none';
@@ -126,13 +126,17 @@
                 world.broadphase = new CANNON.NaiveBroadphase();
                 world.solver.iterations = 10;
 
-                // Materials
-                const groundMaterial = new CANNON.Material('ground');
-                const cylinderMaterial = new CANNON.Material('cylinder');
-                const contactMaterial = new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
-                    friction: 0.4,
-                    restitution: 0.1
-                });
+                // Physics materials (defined here to avoid reference errors)
+                groundMaterial = new CANNON.Material('ground');
+                cylinderMaterial = new CANNON.Material('cylinder');
+                const contactMaterial = new CANNON.ContactMaterial(
+                    groundMaterial, 
+                    cylinderMaterial, 
+                    {
+                        friction: 0.4,
+                        restitution: 0.1
+                    }
+                );
                 world.addContactMaterial(contactMaterial);
 
                 // Create anchor group
@@ -274,7 +278,7 @@
             }
             
             // Update timer display
-            const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000);
+            const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000;
             document.getElementById("resetTimer").textContent = `Next reset in: ${timeLeft.toFixed(1)}s`;
         }
     </script>
