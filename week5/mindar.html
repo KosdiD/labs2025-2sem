@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+// При завантаженні сцени хов<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Сонячна система AR з фізикою</title>
+    <title>Сонячна система AR з фізикою (MindAR)</title>
+    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <!-- MindAR для A-Frame -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { 
@@ -32,6 +34,7 @@
         color: white;
       }
       
+      /* Контроли для масштабу */
       .control-panel {
         position: fixed;
         bottom: 20px;
@@ -45,23 +48,24 @@
       .control-btn {
         width: 50px;
         height: 50px;
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.7);
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
         font-size: 20px;
         font-weight: bold;
+        margin: 0 3px;
         border: none;
         cursor: pointer;
       }
-      .control-value {
-        background-color: rgba(0, 0, 0, 0.7);
+      .scale-value {
+        background-color: rgba(0, 0, 0, 0.5);
         color: white;
         padding: 8px 12px;
-        border-radius: 25px;
+        border-radius: 5px;
         margin: 0 3px;
-        min-width: 100px;
+        min-width: 80px;
         text-align: center;
         font-size: 14px;
       }
@@ -70,11 +74,16 @@
         top: 10px;
         left: 50%;
         transform: translateX(-50%);
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(0, 0, 0, 0.5);
         color: white;
         padding: 8px 15px;
         border-radius: 5px;
         z-index: 998;
+      }
+      .example-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
       }
       .planet-selector {
         background-color: rgba(0, 0, 0, 0.7);
@@ -94,10 +103,13 @@
     
     <div class="mode-indicator" id="mode-indicator">Режим: Анімація</div>
     
+    <!-- Контрольна панель з масштабом -->
     <div class="control-panel">
       <button class="control-btn" id="scale-down">-</button>
-      <div class="control-value">Масштаб: <span id="scale-value">0.2</span></div>
+      <div class="scale-value">Розмір: <span id="scale-value">0.01</span></div>
       <button class="control-btn" id="scale-up">+</button>
+      
+      <button class="control-btn" id="physics-toggle" style="background-color: rgba(100, 150, 255, 0.8);">⚡</button>
       
       <select class="planet-selector" id="planet-select">
         <option value="mercury">Меркурій</option>
@@ -111,7 +123,7 @@
       </select>
       
       <button class="control-btn" id="mass-down">M-</button>
-      <div class="control-value">Маса: <span id="mass-value">1</span></div>
+      <div class="scale-value">Маса: <span id="mass-value">1</span></div>
       <button class="control-btn" id="mass-up">M+</button>
     </div>
     
@@ -139,13 +151,14 @@
         <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0">
-          <a-entity id="solar-system" scale="0.2 0.2 0.2" position="0 0.5 0">
+          <a-entity id="solar-system" scale="0.01 0.01 0.01" position="0 0.5 0">
             
             <a-sphere position="0 0 0" 
                      radius="3" 
                      material="src: #sunTexture; shader: flat; emissive: #ffff80; emissiveIntensity: 0.5"
                      animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear"
-                     simple-planet="name: sun; orbitRadius: 0; mass: 1000; isCenter: true"></a-sphere>
+                     planet="dist: 0; mass: 1.989e30; name: Sun; animated: true; isCenter: true"></a-sphere>
+            
             
             <a-entity id="mercury-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear">
               <a-sphere id="mercury" 
@@ -153,7 +166,7 @@
                        radius="0.5" 
                        material="src: #mercuryTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
-                       simple-planet="name: mercury; orbitRadius: 5; mass: 1; speed: 0.05"></a-sphere>
+                       planet="dist: 57.91e9; mass: 3.285e23; T: 88; name: Mercury; animated: true; simpleMass: 1"></a-sphere>
             </a-entity>
             
             <a-entity id="venus-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear">
@@ -162,7 +175,7 @@
                        radius="0.8" 
                        material="src: #venusTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 13000; easing: linear"
-                       simple-planet="name: venus; orbitRadius: 7; mass: 2; speed: 0.04"></a-sphere>
+                       planet="dist: 108.2e9; mass: 4.876e24; T: 224.7; name: Venus; animated: true; simpleMass: 2"></a-sphere>
             </a-entity>
             
             <a-entity id="earth-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
@@ -171,7 +184,7 @@
                        radius="0.8" 
                        material="src: #earthTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
-                       simple-planet="name: earth; orbitRadius: 10; mass: 3; speed: 0.03"></a-sphere>
+                       planet="dist: 149.6e9; mass: 6e24; T: 365; name: Earth; animated: true; simpleMass: 3"></a-sphere>
             </a-entity>
             
             <a-entity id="mars-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 25000; easing: linear">
@@ -180,7 +193,7 @@
                        radius="0.6" 
                        material="src: #marsTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 10500; easing: linear"
-                       simple-planet="name: mars; orbitRadius: 13; mass: 2; speed: 0.025"></a-sphere>
+                       planet="dist: 227.9e9; mass: 6.417e23; T: 687; name: Mars; animated: true; simpleMass: 2"></a-sphere>
             </a-entity>
             
             <a-entity id="jupiter-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 35000; easing: linear">
@@ -189,7 +202,7 @@
                        radius="2" 
                        material="src: #jupiterTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 9000; easing: linear"
-                       simple-planet="name: jupiter; orbitRadius: 18; mass: 20; speed: 0.02"></a-sphere>
+                       planet="dist: 778.5e9; mass: 1.898e27; T: 4331; name: Jupiter; animated: true; simpleMass: 20"></a-sphere>
             </a-entity>
             
             <a-entity id="saturn-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 45000; easing: linear">
@@ -198,7 +211,7 @@
                          radius="1.8" 
                          material="src: #saturnTexture"
                          animation="property: rotation; to: 0 360 0; loop: true; dur: 9400; easing: linear"
-                         simple-planet="name: saturn; orbitRadius: 24; mass: 15; speed: 0.018"></a-sphere>
+                         planet="dist: 1.434e12; mass: 5.683e26; T: 10747; name: Saturn; animated: true; simpleMass: 15"></a-sphere>
                 <a-torus color="#D4AF37" radius="3" radius-tubular="0.1" segments-tubular="32" rotation="90 0 0"></a-torus>
               </a-entity>
             </a-entity>
@@ -209,7 +222,7 @@
                        radius="1.3" 
                        material="src: #uranusTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 10700; easing: linear"
-                       simple-planet="name: uranus; orbitRadius: 29; mass: 8; speed: 0.015"></a-sphere>
+                       planet="dist: 2.871e12; mass: 8.681e25; T: 30589; name: Uranus; animated: true; simpleMass: 8"></a-sphere>
             </a-entity>
             
             <a-entity id="neptune-orbit" class="orbit" animation="property: rotation; to: 0 360 0; loop: true; dur: 70000; easing: linear">
@@ -218,10 +231,10 @@
                        radius="1.3" 
                        material="src: #neptuneTexture"
                        animation="property: rotation; to: 0 360 0; loop: true; dur: 9800; easing: linear"
-                       simple-planet="name: neptune; orbitRadius: 34; mass: 8; speed: 0.012"></a-sphere>
+                       planet="dist: 4.495e12; mass: 1.024e26; T: 59800; name: Neptune; animated: true; simpleMass: 8"></a-sphere>
             </a-entity>
             
-            <a-entity simple-physics></a-entity>
+            <a-entity main></a-entity>
           </a-entity>
           
           <a-entity light="type: ambient; color: #FFF; intensity: 0.8"></a-entity>
@@ -232,50 +245,64 @@
     </div>
 
     <script>
-      AFRAME.registerComponent('simple-planet', {
+      const day = 24 * 60 * 60; 
+      
+      AFRAME.registerComponent('planet', {
         schema: {
           name: { type: 'string', default: "" },
-          orbitRadius: { type: 'number', default: 0 },
-          mass: { type: 'number', default: 1 },
-          speed: { type: 'number', default: 0.01 },
-          isCenter: { type: 'boolean', default: false }
+          dist: { type: 'number', default: 0 },
+          mass: { type: 'number', default: 0 },
+          T: { type: 'int', default: 0 },
+          v: { type: 'array', default: [0, 0, 0] },
+          a: { type: 'array', default: [0, 0, 0] },
+          pos: { type: 'array', default: [0, 0, 0] },
+          animated: { type: 'boolean', default: true },
+          isCenter: { type: 'boolean', default: false },
+          simpleMass: { type: 'number', default: 1 }
         },
         
         init: function () {
-          this.angle = 0;
-          this.velocity = { x: 0, y: 0, z: 0 };
-          this.originalPosition = this.el.getAttribute('position');
-          this.orbitParent = this.el.parentEl;
+          this.initialPosition = this.el.getAttribute('position');
+          this.initialParentPosition = null;
           
-          if (!this.data.isCenter && this.data.orbitRadius > 0) {
-            const orbitalSpeed = this.data.speed;
-            this.velocity.z = orbitalSpeed * this.data.orbitRadius;
+          this.velocity = { x: 0, y: 0, z: 0 };
+          
+          if (this.el.parentEl && this.el.parentEl.classList.contains('orbit')) {
+            this.initialParentPosition = this.el.parentEl.getAttribute('position');
+          } else if (this.el.id === 'saturn') {
+            this.initialParentPosition = this.el.parentEl.getAttribute('position');
           }
         },
         
-        resetToAnimation: function() {
-          this.el.setAttribute('position', this.originalPosition);
+        resetToAnimated: function() {
+          if (this.initialPosition) {
+            this.el.setAttribute('position', this.initialPosition);
+          }
           
-          if (this.orbitParent && this.orbitParent.classList.contains('orbit')) {
-            this.orbitParent.setAttribute('animation', 'enabled', true);
+          if (this.el.parentEl && this.el.parentEl.classList.contains('orbit')) {
+            this.el.parentEl.setAttribute('animation', 'enabled', true);
+          } else if (this.el.id === 'saturn-system') {
+            if (this.initialParentPosition) {
+              this.el.setAttribute('position', this.initialParentPosition);
+            }
           }
           
           const animation = this.el.getAttribute('animation');
           if (animation) {
             this.el.setAttribute('animation', 'enabled', true);
           }
+          
+          this.data.animated = true;
+          
+          this.velocity = { x: 0, y: 0, z: 0 };
         }
       });
 
-      AFRAME.registerComponent('simple-physics', {
+      AFRAME.registerComponent('main', {
         init: function () {
-          this.planets = [];
+          this.solar_system = document.querySelectorAll('[planet]');
           this.physicsEnabled = false;
           this.timeScale = 0.5;
-          
-          setTimeout(() => {
-            this.planets = Array.from(document.querySelectorAll('[simple-planet]'));
-          }, 100);
         },
         
         togglePhysics: function() {
@@ -293,11 +320,22 @@
         
         enablePhysics: function() {
           document.querySelectorAll('.orbit').forEach(orbit => {
-            orbit.setAttribute('animation', 'enabled', false);
+            const anim = orbit.getAttribute('animation');
+            if (anim) {
+              orbit.setAttribute('animation', 'enabled', false);
+            }
           });
           
-          this.planets.forEach(planetEl => {
-            planetEl.setAttribute('animation', 'enabled', false);
+          this.solar_system.forEach(planet => {
+            const planetComp = planet.components.planet;
+            if (planetComp) {
+              planetComp.data.animated = false;
+              
+              const animation = planet.getAttribute('animation');
+              if (animation) {
+                planet.setAttribute('animation', 'enabled', false);
+              }
+            }
           });
         },
         
@@ -306,29 +344,32 @@
             orbit.setAttribute('animation', 'enabled', true);
           });
           
-          this.planets.forEach(planetEl => {
-            const planetComp = planetEl.components['simple-planet'];
+          this.solar_system.forEach(planet => {
+            const planetComp = planet.components.planet;
             if (planetComp) {
-              planetComp.resetToAnimation();
+              planetComp.resetToAnimated();
             }
           });
         },
         
         tick: function (time, deltaTime) {
-          if (!this.physicsEnabled || this.planets.length === 0) return;
+          if (!this.physicsEnabled) return;
+          
+          const marker = document.querySelector('[mindar-image-target]');
+          if (!marker || !marker.object3D.visible) return;
           
           const dt = deltaTime * 0.001 * this.timeScale;
-          const sun = this.planets.find(p => p.components['simple-planet'].data.isCenter);
+          
+          const sun = Array.from(this.solar_system).find(p => p.components.planet.data.isCenter);
           if (!sun) return;
           
           const sunPos = sun.getAttribute('position');
           
-          this.planets.forEach(planetEl => {
-            const planetComp = planetEl.components['simple-planet'];
-            if (!planetComp || planetComp.data.isCenter) return;
+          this.solar_system.forEach(planetEl => {
+            const planetComp = planetEl.components.planet;
+            if (!planetComp || planetComp.data.animated || planetComp.data.isCenter) return;
             
             const planetPos = planetEl.getAttribute('position');
-            const data = planetComp.data;
             
             const dx = sunPos.x - planetPos.x;
             const dy = sunPos.y - planetPos.y;
@@ -338,7 +379,7 @@
             
             if (distance < 0.1) return;
             
-            const force = (data.mass * 50) / (distance * distance);
+            const force = (planetComp.data.simpleMass * 50) / (distance * distance);
             
             const forceX = (dx / distance) * force;
             const forceY = (dy / distance) * force;
@@ -377,15 +418,15 @@
         const scaleUp = document.getElementById('scale-up');
         const scaleDown = document.getElementById('scale-down');
         const scaleValue = document.getElementById('scale-value');
+        const physicsToggle = document.getElementById('physics-toggle');
         const massUp = document.getElementById('mass-up');
         const massDown = document.getElementById('mass-down');
         const massValue = document.getElementById('mass-value');
         const planetSelect = document.getElementById('planet-select');
-        const physicsToggle = document.getElementById('physics-toggle');
         const solarSystem = document.getElementById('solar-system');
         const arjsLoader = document.querySelector('.arjs-loader');
         
-        let scale = 0.2;
+        let scale = 0.01;
         let selectedPlanet = 'mercury';
         
         const scene = document.querySelector('a-scene');
@@ -399,13 +440,13 @@
         
         function updateScale() {
           solarSystem.setAttribute('scale', `${scale} ${scale} ${scale}`);
-          scaleValue.textContent = scale.toFixed(2);
+          scaleValue.textContent = scale.toFixed(3);
         }
         
         function getCurrentPlanetMass() {
           const planetEl = document.getElementById(selectedPlanet);
-          if (planetEl && planetEl.components['simple-planet']) {
-            return planetEl.components['simple-planet'].data.mass;
+          if (planetEl && planetEl.components.planet) {
+            return planetEl.components.planet.data.simpleMass;
           }
           return 1;
         }
@@ -416,23 +457,30 @@
         
         function changePlanetMass(delta) {
           const planetEl = document.getElementById(selectedPlanet);
-          if (planetEl && planetEl.components['simple-planet']) {
-            const comp = planetEl.components['simple-planet'];
-            comp.data.mass = Math.max(0.1, comp.data.mass + delta);
+          if (planetEl && planetEl.components.planet) {
+            const comp = planetEl.components.planet;
+            comp.data.simpleMass = Math.max(0.1, comp.data.simpleMass + delta);
             updateMassDisplay();
           }
         }
         
         scaleUp.addEventListener('click', function() {
           scale *= 1.2;
-          if (scale > 1) scale = 1;
+          if (scale > 0.2) scale = 0.2;
           updateScale();
         });
         
         scaleDown.addEventListener('click', function() {
           scale /= 1.2;
-          if (scale < 0.01) scale = 0.01;
+          if (scale < 0.001) scale = 0.001;
           updateScale();
+        });
+        
+        physicsToggle.addEventListener('click', function() {
+          const main = document.querySelector('[main]');
+          if (main && main.components.main) {
+            main.components.main.togglePhysics();
+          }
         });
         
         massUp.addEventListener('click', function() {
@@ -448,15 +496,14 @@
           updateMassDisplay();
         });
         
-        physicsToggle.addEventListener('click', function() {
-          const physicsSystem = document.querySelector('[simple-physics]');
-          if (physicsSystem && physicsSystem.components['simple-physics']) {
-            physicsSystem.components['simple-physics'].togglePhysics();
-          }
-        });
-        
         updateScale();
         updateMassDisplay();
+        
+
+        
+  
+          }
+        });
       });
     </script>
   </body>
