@@ -274,7 +274,7 @@
             }
             
             // Update timer display
-            const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000;
+            const timeLeft = ((resetInterval - (Date.now() - lastResetTime)) / 1000);
             document.getElementById("resetTimer").textContent = `Next reset in: ${timeLeft.toFixed(1)}s`;
         }
     </script>
