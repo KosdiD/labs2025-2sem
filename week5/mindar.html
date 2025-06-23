@@ -6,10 +6,9 @@
     <title>Solar System with MindAR</title>
     <!-- Підключаємо A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <!-- Замість AR.js підключаємо MindAR для A-Frame -->
+    <!-- Підключаємо MindAR для A-Frame -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mind-ar-aframe.prod.js"></script>
     <style>
-        /* Стилі для завантажувача можна залишити, вони не заважатимуть */
         .loader {
             position: absolute;
             top: 0;
@@ -32,10 +31,9 @@
     </div>
 
     <!-- 
-      ЗМІНА: Тег <a-scene> тепер налаштований для MindAR.
-      - 'mindar-image' - головний компонент.
-      - 'imageTargetSrc' - шлях до вашого скомпільованого маркера.
-      - 'uiLoading' та 'uiScanning' - вимикають стандартний інтерфейс MindAR, щоб ми могли використовувати свій.
+      Сцена налаштована для MindAR.
+      'imageTargetSrc' - шлях до вашого скомпільованого маркера.
+      Цей шлях ЗАЛИШАЄТЬСЯ ЛОКАЛЬНИМ, оскільки файл маркера унікальний.
     -->
     <a-scene mindar-image="imageTargetSrc: ../patterns/target.mind; uiLoading: no; uiScanning: no;" 
              color-space="sRGB" 
@@ -44,26 +42,26 @@
              device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <!-- Текстури залишаються без змін -->
-            <img id="sun" src="../textures/sun.jpg">
-            <img id="mercury" src="../textures/mercury.jpg">
-            <img id="venus" src="../textures/venus.jpg">
-            <img id="earth" src="../textures/earth.jpg">
-            <img id="mars" src="../textures/mars.jpg">
-            <img id="jupiter" src="../textures/jupiter.jpg">
-            <img id="saturn" src="../textures/saturn.jpg">
-            <img id="uranus" src="../textures/uranus.jpg">
-            <img id="neptune" src="../textures/neptune.jpg">
+            <!-- 
+              ЗМІНА: Шляхи до текстур замінено на абсолютні URL-адреси з надійного джерела.
+              Це повинно вирішити проблему "білого екрана", пов'язану із завантаженням.
+            -->
+            <img id="sun" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/sun.jpg">
+            <img id="mercury" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mercury.jpg">
+            <img id="venus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/venus.jpg">
+            <img id="earth" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/earth.jpg">
+            <img id="mars" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/mars.jpg">
+            <img id="jupiter" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/jupiter.jpg">
+            <img id="saturn" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/saturn.jpg">
+            <img id="saturn-ring" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/saturn-rings.png">
+            <img id="uranus" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/uranus.jpg">
+            <img id="neptune" src="https://raw.githubusercontent.com/stemkoski/AR-Examples/master/textures/neptune.jpg">
         </a-assets>
 
         <!-- Камера, якою керує MindAR -->
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- 
-          ЗМІНА: Замість <a-marker> використовується <a-entity mindar-image-target>.
-          'targetIndex: 0' означає, що контент буде прив'язаний до першого зображення у вашому файлі target.mind.
-          Ми беремо найповнішу модель Сонячної системи з вашого коду.
-        -->
+        <!-- 'targetIndex: 0' прив'язує контент до першого зображення у файлі target.mind. -->
         <a-entity mindar-image-target="targetIndex: 0">
             <a-entity scale="0.3 0.3 0.3" rotation="-90 0 0">
                 <!-- Sun -->
@@ -100,8 +98,8 @@
                 <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear;">
                     <a-entity position="4.5 0 0">
                         <a-sphere src="#saturn" radius="0.35"></a-sphere>
-                        <!-- Кільця Сатурна, прив'язані до планети -->
-                        <a-torus src="#saturn" radius="0.45" radius-tubular="0.05" rotation="90 0 0" scale="1 1 0.1"></a-torus>
+                        <!-- ЗМІНА: Використання <a-ring> з правильною текстурою та прозорістю -->
+                        <a-ring src="#saturn-ring" radius-inner="0.45" radius-outer="0.75" rotation="-90 0 0" material="transparent: true; opacity: 0.9"></a-ring>
                     </a-entity>
                 </a-entity>
                 
@@ -119,15 +117,13 @@
     </a-scene>
 
     <script>
-        // Простий скрипт для приховування завантажувача, коли сцена готова
         window.addEventListener('load', function() {
             const scene = document.querySelector('a-scene');
             const loader = document.querySelector('.loader');
-            // Подія 'renderstart' надійно спрацьовує, коли все завантажено
             scene.addEventListener('renderstart', () => {
                 setTimeout(() => {
                     loader.style.display = 'none';
-                }, 500); // Невелика затримка для плавності
+                }, 500);
             });
         });
     </script>
