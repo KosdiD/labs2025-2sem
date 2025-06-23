@@ -5,54 +5,42 @@
     <title>Rolling Cylinder AR Physics</title>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; }
-        #mindar-container { width: 100%; height: 100%; }
-        #info {
-            position: absolute; top: 10px; left: 10px;
-            color: white; background: rgba(0,0,0,0.7);
-            padding: 10px; border-radius: 5px;
-            font-family: Arial; z-index: 1000;
+        #mindar-container { 
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-        #start-button {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px; font-size: 18px;
-            background: #4CAF50; color: white;
-            border: none; border-radius: 5px;
-            cursor: pointer; z-index: 1001;
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div id="info">Ready to start AR experience</div>
-    <button id="start-button">Start AR</button>
+    <div id="info">Point camera at marker</div>
     <div id="mindar-container"></div>
 
-    <!-- Only load MindAR which includes Three.js -->
+    <!-- Load MindAR which includes Three.js -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
     
     <script>
-        // Global variables
-        let mindarThree, cylinderBody, cylinderMesh;
-        let lastResetTime = Date.now();
-        const resetInterval = 7000;
-        const clock = new THREE.Clock();
-        
-        // Start button handler
-        document.getElementById('start-button').addEventListener('click', async () => {
-            document.getElementById('start-button').style.display = 'none';
-            initAR();
-        });
-
-        async function initAR() {
+        document.addEventListener("DOMContentLoaded", async () => {
             try {
-                // Initialize MindAR
-                mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                // Initialize MindAR with proper container
+                const mindarThree = new window.MINDAR.IMAGE.MindARThree({
                     container: document.getElementById("mindar-container"),
                     imageTargetSrc: "../patterns/rolling.mind",
-                    maxTrack: 1,
-                    filterMinCF: 0.8,
-                    filterBeta: 1000
+                    uiScanning: "#info",
+                    uiLoading: "no"
                 });
 
                 const { renderer, scene, camera } = mindarThree;
@@ -60,7 +48,6 @@
                 // Configure renderer
                 renderer.shadowMap.enabled = true;
                 renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.outputEncoding = THREE.sRGBEncoding;
 
                 // Lighting
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -71,23 +58,13 @@
                 directionalLight.castShadow = true;
                 scene.add(directionalLight);
 
-                // Physics setup
+                // Physics world
                 const world = new CANNON.World();
                 world.gravity.set(0, -9.82, 0);
                 world.broadphase = new CANNON.NaiveBroadphase();
                 world.solver.iterations = 10;
 
-                // Materials
-                const groundMaterial = new CANNON.Material('ground');
-                const cylinderMaterial = new CANNON.Material('cylinder');
-                world.addContactMaterial(
-                    new CANNON.ContactMaterial(groundMaterial, cylinderMaterial, {
-                        friction: 0.4,
-                        restitution: 0.1
-                    })
-                );
-
-                // Create scene
+                // Create anchor group
                 const anchor = mindarThree.addAnchor(0);
                 const group = new THREE.Group();
                 group.scale.set(0.1, 0.1, 0.1);
@@ -114,21 +91,31 @@
                 group.add(inclinedPlane);
 
                 // Add cylinder
-                cylinderMesh = new THREE.Mesh(
+                const cylinderMesh = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.5, 0.5, 2, 32),
                     new THREE.MeshLambertMaterial({ color: 0xff0000 })
                 );
                 cylinderMesh.castShadow = true;
                 group.add(cylinderMesh);
 
-                // Physics bodies
-                cylinderBody = new CANNON.Body({
+                // Cylinder physics
+                const cylinderBody = new CANNON.Body({
                     mass: 5,
-                    material: cylinderMaterial,
                     shape: new CANNON.Cylinder(0.5, 0.5, 2, 12)
                 });
                 cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
                 world.add(cylinderBody);
+
+                // Reset function
+                function resetCylinder() {
+                    cylinderBody.position.set(0, 35, -10);
+                    cylinderBody.velocity.set(0, 0, 0);
+                    cylinderBody.angularVelocity.set(0, 0, 0);
+                    cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
+                    
+                    const impulse = new CANNON.Vec3(0, 0, 5);
+                    cylinderBody.applyImpulse(impulse, new CANNON.Vec3(0, 35, -10));
+                }
 
                 // Start AR
                 await mindarThree.start();
@@ -136,45 +123,21 @@
                 
                 // Animation loop
                 renderer.setAnimationLoop(() => {
-                    const deltaTime = Math.min(clock.getDelta(), 0.1);
+                    const deltaTime = clock.getDelta();
                     world.step(deltaTime);
                     
                     // Update cylinder
-                    if (cylinderBody && cylinderMesh) {
-                        cylinderMesh.position.copy(cylinderBody.position);
-                        cylinderMesh.quaternion.copy(cylinderBody.quaternion);
-                    }
-                    
-                    // Auto-reset
-                    if (Date.now() - lastResetTime > resetInterval) {
-                        resetCylinder();
-                    }
+                    cylinderMesh.position.copy(cylinderBody.position);
+                    cylinderMesh.quaternion.copy(cylinderBody.quaternion);
                     
                     renderer.render(scene, camera);
                 });
 
             } catch (error) {
                 console.error("AR Error:", error);
-                document.getElementById("info").textContent = "AR Error - Please refresh";
-                document.getElementById('start-button').style.display = 'block';
+                document.getElementById("info").textContent = "Error loading AR. Please allow camera access.";
             }
-        }
-
-        function resetCylinder() {
-            if (!cylinderBody) return;
-            
-            cylinderBody.position.set(0, 35, -10);
-            cylinderBody.velocity.set(0, 0, 0);
-            cylinderBody.angularVelocity.set(0, 0, 0);
-            cylinderBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), Math.PI / 2);
-            
-            // Apply impulse
-            const impulse = new CANNON.Vec3(0, 0, 5);
-            cylinderBody.applyImpulse(impulse, new CANNON.Vec3(0, 35, -10));
-            
-            lastResetTime = Date.now();
-            document.getElementById("info").textContent = "Cylinder reset - Tracking AR";
-        }
+        });
     </script>
 </body>
 </html>
