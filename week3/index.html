@@ -1,198 +1,78 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AR-сцена з власними маркерами та моделями</title>
-    <!-- A-Frame -->
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple AR Scene</title>
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-    <!-- A more stable AR.js CDN link -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
-    <!-- MSDF Text Component -->
-    <script src="https://unpkg.com/aframe-msdf-text-component@^3.0.0/dist/aframe-msdf-text-component.min.js"></script>
-    <style>
-      .arjs-loader {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        background-color: rgba(0, 0, 0, 0.8);
-        z-index: 9999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-      
-      .arjs-loader div {
-        text-align: center;
-        font-size: 1.25em;
-        color: white;
-      }
-    </style>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
-    <div class="arjs-loader">
-      <div>Завантаження AR, зачекайте...</div>
-    </div>
-    
-    <a-scene
-      embedded
-      arjs="sourceType: webcam; 
-            sourceWidth: 1920; 
-            sourceHeight: 1080;
-            debugUIEnabled: false; 
-            trackingMethod: best;
-            detectionMode: mono_and_matrix; 
-            matrixCodeType: 3x3;"
-      renderer="antialias: true; alpha: true; precision: medium;"
-      vr-mode-ui="enabled: false"
-    >
-      <!-- Перший маркер - pattern-jup -->
-      <a-marker type="pattern" url="../patterns/pattern-jup.patt" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-        <a-entity
-          id="jupiterScene"
-          rotation="-90 0 0"
-          scale="0.3 0.3 0.3"
-          position="0 0 0"
-        >
-          <!-- Модель Юпітера -->
-          <a-entity 
-            gltf-model="../models/jup.glb"
-            position="0 -3 -2"
-            scale="2 2 2"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 8000; easing: linear"
-          ></a-entity>
-          
-          <!-- Текстурований куб -->
-          <a-box
-            position="-2 1 0"
-            width="1" height="1" depth="1"
-            src="../textures/cloth.jpg"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 4000"
-          ></a-box>
-          
-          <!-- Текстурована сфера -->
-          <a-sphere
-            position="2 1 0"
-            radius="0.75"
-            src="../textures/metal.jpg"
-            animation="property: scale; dir: alternate; dur: 2000; loop: true; to: 1.2 1.2 1.2"
-          ></a-sphere>
-          
-          <!-- Український текст -->
-          <a-text 
-            value="Планета Юпітер" 
-            font="../fonts/volja-regular_w-msdf.json" 
-            negate="false" 
-            color="#00ffff" 
-            width="8" 
-            position="0 3 0"
-            align="center"
-            animation="property: color; from: #00ffff; to: #ff00ff; loop: true; dur: 3000"
-          ></a-text>
-          
-          <!-- Орбітальне кільце -->
-          <a-torus 
-            position="0 0 0" 
-            color="#FFD700" 
-            radius="3" 
-            radius-tubular="0.1"
-            rotation="90 0 0"
-            opacity="0.6"
-            animation="property: rotation; to: 90 360 0; loop: true; dur: 12000"
-          ></a-torus>
-        </a-entity>
-      </a-marker>
-      
-      <!-- Другий маркер - pattern-york -->
-      <a-marker type="pattern" url="../patterns/pattern-york.patt" smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2">
-        <a-entity
-          id="cupScene"
-          rotation="-90 0 0"
-          scale="0.5 0.5 0.5"
-          position="0 0 0"
-        >
-          <!-- Група для чашки та тексту, щоб керувати їх позицією разом -->
-          <a-entity position="0 1.5 0">
-              <!-- Модель чашки (тепер в центрі) -->
-              <a-entity 
-                gltf-model="../models/cup.glb"
-                position="0 0 0"
-                scale="1 1 1"
-                animation="property: rotation; to: 0 -360 0; loop: true; dur: 6000"
-              ></a-entity>
-              
-              <!-- Текст з анімацією (розташований над чашкою) -->
-              <a-text 
-                value="Чай для вас" 
-                font="../fonts/volja-regular_w-msdf.json" 
-                negate="false" 
-                color="#ffff00" 
-                width="6" 
-                position="0 2.5 0"
-                align="center"
-              ></a-text>
-          </a-entity>
-          
-          <!-- Текстурований циліндр -->
-          <a-cylinder
-            position="2 1 0"
-            height="1.5" radius="0.5"
-            src="../textures/ice.jpg"
-            animation="property: material.color; dir: alternate; dur: 3000; loop: true; to: #00ffff"
-          ></a-cylinder>
-          
-          <!-- Анімований тор -->
-          <a-torus
-            position="-2 0.5 0"
-            color="green"
-            radius="0.5"
-            animation="property: components.material.material.color; type: color; from: green; to: red; loop: true; dur: 5000"
-          ></a-torus>
-          
-          <!-- Анімований torus-knot -->
-          <a-torus-knot
-            color="orange"
-            radius="0.5"
-            position="0 0.5 -2"
-            animation="property: rotation; to: 0 0 360; loop: true; dur: 7000"
-          ></a-torus-knot>
-          
-          <!-- Додаткові анімовані сфери -->
-          <a-sphere 
-            position="1.5 1 1.5" 
-            radius="0.2" 
-            color="#ff0000"
-            animation="property: position; to: 1.5 0 1.5; dir: alternate; dur: 2000; loop: true"
-          ></a-sphere>
-          <a-sphere 
-            position="-1.5 0 -1.5" 
-            radius="0.2" 
-            color="#00ff00"
-            animation="property: position; to: -1.5 1 -1.5; dir: alternate; dur: 2000; loop: true"
-          ></a-sphere>
-        </a-entity>
-      </a-marker>
-      
-      <!-- Камера -->
-      <a-entity camera></a-entity>
-    </a-scene>
-    
-    <script>
-      // Приховати завантажувач коли сцена готова
-      document.addEventListener("DOMContentLoaded", function() {
-        const scene = document.querySelector('a-scene');
-        const loader = document.querySelector('.arjs-loader');
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    <a-scene embedded 
+         arjs="sourceType: webcam; 
+               debugUIEnabled: false;
+               detectionMode: mono_and_matrix;
+               matrixCodeType: 3x3;
+               maxDetectionRate: 60;">
         
-        if (scene.hasLoaded) {
-          loader.style.display = 'none';
-        } else {
-          scene.addEventListener('loaded', function() {
-            loader.style.display = 'none';
-          });
-        }
-      });
-    </script>
-  </body>
+        <a-assets>
+            <!-- Textures -->
+            <img id="cloth" src="../textures/cloth.jpg" crossorigin="anonymous">
+            <img id="metal" src="../textures/metal.jpg" crossorigin="anonymous">
+            <img id="ice" src="../textures/ice.jpg" crossorigin="anonymous">
+            
+            <!-- Models -->
+            <a-asset-item id="jupiter-model" src="models/jup.glb"></a-asset-item>
+            <a-asset-item id="cup-model" src="models/cup.glb"></a-asset-item>
+        </a-assets>
+
+        <!-- First Marker - Jupiter -->
+        <a-marker type="pattern" url="../patterns/pattern-jup.patt">
+            <a-entity scale="0.3 0.3 0.3" position="0 0 0">
+                <a-entity gltf-model="#jupiter-model" 
+                          position="0 -3 -2" 
+                          scale="2 2 2"
+                          animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
+                </a-entity>
+                
+                <a-box position="-2 1 0" src="#cloth"
+                       animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
+                </a-box>
+                
+                <a-sphere position="2 1 0" radius="0.75" src="#metal"
+                          animation="property: scale; to: 1.2 1.2 1.2; loop: true; dur: 2000">
+                </a-sphere>
+                
+                <a-torus position="0 0 0" color="#FFD700" radius="3" radius-tubular="0.1"
+                         animation="property: rotation; to: 90 360 0; loop: true; dur: 12000">
+                </a-torus>
+            </a-entity>
+        </a-marker>
+
+        <!-- Second Marker - Cup -->
+        <a-marker type="pattern" url="../patterns/pattern-york.patt">
+            <a-entity scale="0.5 0.5 0.5" position="0 0 0">
+                <a-entity gltf-model="#cup-model" 
+                          position="0 1.5 0"
+                          animation="property: rotation; to: 0 -360 0; loop: true; dur: 6000">
+                </a-entity>
+                
+                <a-cylinder position="2 1 0" height="1.5" radius="0.5" src="#ice"
+                            animation="property: material.color; to: #00ffff; loop: true; dur: 3000">
+                </a-cylinder>
+                
+                <a-torus position="-2 0.5 0" color="green" radius="0.5"
+                         animation="property: material.color; from: green; to: red; loop: true; dur: 5000">
+                </a-torus>
+                
+                <a-torus-knot position="0 0.5 -2" color="orange" radius="0.5"
+                               animation="property: rotation; to: 0 0 360; loop: true; dur: 7000">
+                </a-torus-knot>
+            </a-entity>
+        </a-marker>
+
+        <!-- Camera -->
+        <a-entity camera></a-entity>
+    </a-scene>
+</body>
 </html>

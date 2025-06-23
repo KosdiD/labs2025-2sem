@@ -1,139 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Сонячна система в AR</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Marker AR Scene</title>
     <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.0/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
-
-<body style="margin: 0px; overflow: hidden;">
-    <a-scene
-        vr-mode-ui="enabled: false;"
-        renderer="logarithmicDepthBuffer: true; antialias: true; colorManagement: true;"
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-        events="marker-handler"
-    >
-        <a-assets timeout="30000">
-            <img id="sunTexture" src="../textures/sun.jpg">
-            <img id="mercuryTexture" src="../textures/mercury.jpg">
-            <img id="venusTexture" src="../textures/venus.jpg">
-            <img id="earthTexture" src="../textures/earth.jpg">
-            <img id="marsTexture" src="../textures/mars.jpg">
-            <img id="saturnTexture" src="../textures/saturn.jpg">
-            <img id="uranusTexture" src="../textures/uranus.jpg">
-            <img id="neptuneTexture" src="../textures/neptune.jpg">
-            <a-asset-item id="jupiterModel" src="../models/jup.glb"></a-asset-item>
+<body style="margin: 0; overflow: hidden;">
+    <a-scene embedded 
+         arjs="sourceType: webcam; 
+               debugUIEnabled: false;
+               detectionMode: mono_and_matrix;
+               matrixCodeType: 3x3;">
+        
+        <!-- Assets -->
+        <a-assets>
+            <!-- Models -->
+            <a-asset-item id="jupiter-model" src="../models/jup.glb"></a-asset-item>
+            <a-asset-item id="cup-model" src="../models/cup.glb"></a-asset-item>
         </a-assets>
 
-        <a-marker id="marker-jup" type="pattern" url="../patterns/pattern-jup.patt">
-            <a-entity id="content-jup" visible="false">
-                <a-entity position="0 0.5 0" light="type: point; intensity: 1.5; distance: 10;">
-                    <a-sphere
-                        src="#sunTexture"
-                        radius="0.4"
-                        animation="property: rotation; to: 0 360 0; loop: true; dur: 25000; easing: linear;"
-                    ></a-sphere>
-                    <a-text value="Сонце" align="center" color="#FFF" position="0 0.6 0" look-at="[camera]" scale="0.3 0.3 0.3" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 8800; easing: linear;">
-                    <a-entity position="0.7 0.5 0">
-                        <a-sphere src="#mercuryTexture" radius="0.08"></a-sphere>
-                        <a-text value="Меркурій" align="center" color="#FFF" position="0 0.2 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 22500; easing: linear;">
-                    <a-entity position="1.1 0.5 0">
-                        <a-sphere src="#venusTexture" radius="0.12"></a-sphere>
-                        <a-text value="Венера" align="center" color="#FFF" position="0 0.25 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 36500; easing: linear;">
-                     <a-entity position="1.5 0.5 0">
-                        <a-sphere src="#earthTexture" radius="0.13"></a-sphere>
-                        <a-text value="Земля" align="center" color="#FFF" position="0 0.25 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-            </a-entity>
+        <!-- 1. Hiro Marker (Preset) -->
+        <a-marker preset="hiro">
+            <a-box color="red" position="0 0.5 0" scale="0.5 0.5 0.5"></a-box>
         </a-marker>
 
-        <a-marker id="marker-york" type="pattern" url="../patterns/pattern-york.patt">
-            <a-entity id="content-york" visible="false">
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 18000; easing: linear;">
-                    <a-entity position="0.8 0.5 0">
-                        <a-sphere src="#marsTexture" radius="0.1"></a-sphere>
-                        <a-text value="Марс" align="center" color="#FFF" position="0 0.2 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-                
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 45000; easing: linear;">
-                    <a-entity position="1.5 0.5 0">
-                        <a-gltf-model src="#jupiterModel" scale="0.3 0.3 0.3"></a-gltf-model>
-                        <a-text value="Юпітер" align="center" color="#FFF" position="0 0.4 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear;">
-                    <a-entity position="2.2 0.5 0">
-                        <a-sphere src="#saturnTexture" radius="0.25"></a-sphere>
-                        <a-ring color="#8A7D60" radius-inner="0.3" radius-outer="0.5" rotation="90 0 0"></a-ring>
-                        <a-text value="Сатурн" align="center" color="#FFF" position="0 0.5 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 75000; easing: linear;">
-                    <a-entity position="2.8 0.5 0">
-                        <a-sphere src="#uranusTexture" radius="0.2"></a-sphere>
-                        <a-text value="Уран" align="center" color="#FFF" position="0 0.3 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-
-                <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 90000; easing: linear;">
-                    <a-entity position="3.3 0.5 0">
-                        <a-sphere src="#neptuneTexture" radius="0.19"></a-sphere>
-                        <a-text value="Нептун" align="center" color="#FFF" position="0 0.3 0" look-at="[camera]" scale="0.2 0.2 0.2" font="../fonts/volja-regular_w-msdf.json" negate="false"></a-text>
-                    </a-entity>
-                </a-entity>
-            </a-entity>
+        <!-- 2. Kanji Marker (Preset) -->
+        <a-marker preset="kanji">
+            <a-sphere color="blue" radius="0.5" position="0 0.5 0"></a-sphere>
         </a-marker>
 
+        <!-- 3. Custom Pattern Marker 1 -->
+        <a-marker type="pattern" url="../patterns/pattern-jup.patt">
+            <a-cylinder color="green" height="1" radius="0.3" position="0 0.5 0"></a-cylinder>
+        </a-marker>
+
+        <!-- 4. Custom Pattern Marker 2 -->
+        <a-marker type="pattern" url="../patterns/pattern-york.patt">
+            <a-cone color="yellow" radius-bottom="0.4" height="1" position="0 0.5 0"></a-cone>
+        </a-marker>
+
+        <!-- Camera -->
         <a-entity camera></a-entity>
-        <a-light type="ambient" color="#BBB"></a-light>
-        <a-light type="directional" color="#FFF" intensity="0.6" position="-1 1 1"></a-light>
     </a-scene>
-
-    <script>
-        // This component handles the logic for showing and hiding marker content
-        AFRAME.registerComponent('marker-handler', {
-            init: function() {
-                const markerJup = document.querySelector('#marker-jup');
-                const markerYork = document.querySelector('#marker-york');
-                const contentJup = document.querySelector('#content-jup');
-                const contentYork = document.querySelector('#content-york');
-
-                markerJup.addEventListener('markerFound', () => {
-                    contentJup.setAttribute('visible', true);
-                    console.log('Marker Jup Found');
-                });
-                markerJup.addEventListener('markerLost', () => {
-                    contentJup.setAttribute('visible', false);
-                    console.log('Marker Jup Lost');
-                });
-
-                markerYork.addEventListener('markerFound', () => {
-                    contentYork.setAttribute('visible', true);
-                    console.log('Marker York Found');
-                });
-                markerYork.addEventListener('markerLost', () => {
-                    contentYork.setAttribute('visible', false);
-                    console.log('Marker York Lost');
-                });
-            }
-        });
-    </script>
 </body>
 </html>

@@ -1,172 +1,210 @@
 <!DOCTYPE html>
 <html>
- <head>
-   <meta charset="utf-8">
-   <title>Rolling Cylinder with CANNON Physics</title>
-   <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
-   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.3/dist/aframe-physics-system.min.js"></script>
- </head>
- <body>
-   <a-scene physics="debug: true">
-     
-     <!-- Камера -->
-     <a-entity camera position="0 5 15" look-controls wasd-controls></a-entity>
-     <!-- Підлога -->
-     <a-plane static-body 
-              position="0 0 0" 
-              rotation="-90 0 0" 
-              width="20" 
-              height="20" 
-              color="#7BC8A4">
-     </a-plane>
-     <!-- Похилена площина -->
-     <a-plane static-body 
-              position="0 5 0" 
-              rotation="-45 0 0" 
-              width="10" 
-              height="80" 
-              color="#7BC224">
-     </a-plane>
-     <!-- Динамічний циліндр -->
-     <a-cylinder 
-       id="rollingCylinder"
-       position="0 35 -10"
-       radius="0.5"
-       height="2"
-       color="red"
- rotation="0 0 90"
-       dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
-     </a-cylinder>
+<head>
+    <meta charset="utf-8">
+    <title>Rolling Cylinder with CANNON Physics</title>
+    <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-physics-system@v4.2.3/dist/aframe-physics-system.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+</head>
+<body>
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;" physics="debug: true">
+        
+        <!-- Jupiter Pattern Marker -->
+        <a-marker type="pattern" url="../patterns/rollingstones.patt">
+            <!-- Camera -->
+            <a-entity camera position="0 5 15" look-controls></a-entity>
+            
+            <!-- Floor -->
+            <a-plane static-body 
+                     position="0 0 0" 
+                     rotation="-90 0 0" 
+                     width="20" 
+                     height="20" 
+                     color="#7BC8A4">
+            </a-plane>
+            
+            <!-- Sloped Plane -->
+            <a-plane static-body 
+                     position="0 5 0" 
+                     rotation="-45 0 0" 
+                     width="10" 
+                     height="80" 
+                     color="#7BC224">
+            </a-plane>
+            
+            <!-- Dynamic Cylinder -->
+            <a-cylinder 
+                id="rollingCylinder"
+                position="0 35 -10"
+                radius="0.5"
+                height="2"
+                color="red"
+                rotation="0 0 90"
+                dynamic-body="shape: cylinder; mass: 10; linearDamping: 0.1; angularDamping: 0.1;">
+            </a-cylinder>
 
-     <!-- Вектори сил -->
-     <a-entity id="gravityVector" line="start: 0 0 0; end: 0 -2 0; color: blue" visible="false"></a-entity>
-     <a-cone id="gravityArrow" position="0 -2 0" radius-bottom="0.1" radius-top="0" height="0.3" color="blue" visible="false"></a-cone>
-     <a-text id="gravityLabel" value="Gravity" position="0 -2.5 0" align="center" color="blue" scale="0.5 0.5 0.5" visible="false"></a-text>
-     
-     <a-entity id="normalVector" line="start: 0 0 0; end: 0 0 0; color: green" visible="false"></a-entity>
-     <a-cone id="normalArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="green" visible="false"></a-cone>
-     <a-text id="normalLabel" value="Normal" position="0 0 0" align="center" color="green" scale="0.5 0.5 0.5" visible="false"></a-text>
-     
-     <a-entity id="frictionVector" line="start: 0 0 0; end: 0 0 0; color: yellow" visible="false"></a-entity>
-     <a-cone id="frictionArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="yellow" visible="false"></a-cone>
-     <a-text id="frictionLabel" value="Friction" position="0 0 0" align="center" color="yellow" scale="0.5 0.5 0.5" visible="false"></a-text>
-     
-     <a-entity id="impulseVector" line="start: 0 0 0; end: 0 0 0; color: red" visible="false"></a-entity>
-     <a-cone id="impulseArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="red" visible="false"></a-cone>
-     <a-text id="impulseLabel" value="Impulse" position="0 0 0" align="center" color="red" scale="0.5 0.5 0.5" visible="false"></a-text>
+            <!-- Force Vectors -->
+            <a-entity id="gravityVector" line="start: 0 0 0; end: 0 -2 0; color: blue" visible="false"></a-entity>
+            <a-cone id="gravityArrow" position="0 -2 0" radius-bottom="0.1" radius-top="0" height="0.3" color="blue" visible="false"></a-cone>
+            <a-text id="gravityLabel" value="Gravity" position="0 -2.5 0" align="center" color="blue" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="normalVector" line="start: 0 0 0; end: 0 0 0; color: green" visible="false"></a-entity>
+            <a-cone id="normalArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="green" visible="false"></a-cone>
+            <a-text id="normalLabel" value="Normal" position="0 0 0" align="center" color="green" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="frictionVector" line="start: 0 0 0; end: 0 0 0; color: yellow" visible="false"></a-entity>
+            <a-cone id="frictionArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="yellow" visible="false"></a-cone>
+            <a-text id="frictionLabel" value="Friction" position="0 0 0" align="center" color="yellow" scale="0.5 0.5 0.5" visible="false"></a-text>
+            
+            <a-entity id="impulseVector" line="start: 0 0 0; end: 0 0 0; color: red" visible="false"></a-entity>
+            <a-cone id="impulseArrow" position="0 0 0" radius-bottom="0.1" radius-top="0" height="0.3" color="red" visible="false"></a-cone>
+            <a-text id="impulseLabel" value="Impulse" position="0 0 0" align="center" color="red" scale="0.5 0.5 0.5" visible="false"></a-text>
+        </a-marker>
+    </a-scene>
 
-     <script>
-       // Додаємо імпульс після завантаження тіла
-       AFRAME.registerComponent('apply-impulse-on-start', {
-         init: function () {
-           this.el.addEventListener('body-loaded', () => {
-             const el = this.el;
-             const impulse = new CANNON.Vec3(0, 0, 5); // Напрямок штовхання
-             const worldPoint = new CANNON.Vec3().copy(el.object3D.position); // Місце застосування
-             el.body.applyImpulse(impulse, worldPoint);
-           });
-         }
-       });
+    <script>
+        // Apply impulse on start and reset every 7 seconds
+        AFRAME.registerComponent('cylinder-controls', {
+            init: function () {
+                this.cylinder = document.querySelector('#rollingCylinder');
+                this.initialPosition = {x: 0, y: 35, z: -10};
+                this.initialRotation = {x: 0, y: 0, z: 90};
+                this.lastReset = Date.now();
+                
+                this.cylinder.addEventListener('body-loaded', () => {
+                    this.applyImpulse();
+                });
+            },
+            
+            applyImpulse: function() {
+                const impulse = new CANNON.Vec3(0, 0, 5);
+                const worldPoint = new CANNON.Vec3().copy(this.cylinder.object3D.position);
+                this.cylinder.body.applyImpulse(impulse, worldPoint);
+            },
+            
+            resetCylinder: function() {
+                this.cylinder.body.position.set(
+                    this.initialPosition.x,
+                    this.initialPosition.y,
+                    this.initialPosition.z
+                );
+                this.cylinder.body.velocity.set(0, 0, 0);
+                this.cylinder.body.angularVelocity.set(0, 0, 0);
+                this.cylinder.setAttribute('rotation', this.initialRotation);
+                this.applyImpulse();
+                this.lastReset = Date.now();
+            },
+            
+            tick: function () {
+                if (!this.cylinder.body) return;
+                
+                // Reset cylinder every 7 seconds
+                const now = Date.now();
+                if (now - this.lastReset > 7000) {
+                    this.resetCylinder();
+                }
+            }
+        });
 
-       // Компонент для відображення векторів сил
-       AFRAME.registerComponent('force-vectors', {
-         init: function () {
-           this.cylinder = document.querySelector('#rollingCylinder');
-           this.gravityVector = document.querySelector('#gravityVector');
-           this.gravityArrow = document.querySelector('#gravityArrow');
-           this.gravityLabel = document.querySelector('#gravityLabel');
-           this.normalVector = document.querySelector('#normalVector');
-           this.normalArrow = document.querySelector('#normalArrow');
-           this.normalLabel = document.querySelector('#normalLabel');
-           this.frictionVector = document.querySelector('#frictionVector');
-           this.frictionArrow = document.querySelector('#frictionArrow');
-           this.frictionLabel = document.querySelector('#frictionLabel');
-           this.impulseVector = document.querySelector('#impulseVector');
-           this.impulseArrow = document.querySelector('#impulseArrow');
-           this.impulseLabel = document.querySelector('#impulseLabel');
-           
-           this.cylinder.addEventListener('body-loaded', () => {
-             this.gravityVector.setAttribute('visible', true);
-             this.gravityArrow.setAttribute('visible', true);
-             this.gravityLabel.setAttribute('visible', true);
-             this.normalVector.setAttribute('visible', true);
-             this.normalArrow.setAttribute('visible', true);
-             this.normalLabel.setAttribute('visible', true);
-             this.frictionVector.setAttribute('visible', true);
-             this.frictionArrow.setAttribute('visible', true);
-             this.frictionLabel.setAttribute('visible', true);
-             this.impulseVector.setAttribute('visible', true);
-             this.impulseArrow.setAttribute('visible', true);
-             this.impulseLabel.setAttribute('visible', true);
-           });
-         },
-         
-         tick: function () {
-           if (!this.cylinder.body) return;
-           
-           const pos = this.cylinder.getAttribute('position');
-           const body = this.cylinder.body;
-           const mass = body.mass;
-           const g = 9.82;
-           
-           // Гравітація
-           const gravityEnd = {x: pos.x, y: pos.y - mass * g * 0.1, z: pos.z};
-           this.gravityVector.setAttribute('line', {
-             start: `${pos.x} ${pos.y} ${pos.z}`,
-             end: `${gravityEnd.x} ${gravityEnd.y} ${gravityEnd.z}`
-           });
-           this.gravityArrow.setAttribute('position', gravityEnd);
-           this.gravityLabel.setAttribute('position', `${gravityEnd.x} ${gravityEnd.y - 0.5} ${gravityEnd.z}`);
-           
-           // Нормальна сила
-           if (pos.y <= 0.5) {
-             const normalEnd = {x: pos.x, y: pos.y + mass * g * 0.1, z: pos.z};
-             this.normalVector.setAttribute('line', {
-               start: `${pos.x} ${pos.y} ${pos.z}`,
-               end: `${normalEnd.x} ${normalEnd.y} ${normalEnd.z}`
-             });
-             this.normalArrow.setAttribute('position', normalEnd);
-             this.normalArrow.setAttribute('rotation', '180 0 0');
-             this.normalLabel.setAttribute('position', `${normalEnd.x} ${normalEnd.y + 0.5} ${normalEnd.z}`);
-           }
-           
-           // Сила тертя
-           const velocity = body.velocity;
-           if (velocity.length() > 0.1) {
-             const frictionDirX = -velocity.x * 0.5 / velocity.length();
-             const frictionDirY = -velocity.y * 0.5 / velocity.length();
-             const frictionDirZ = -velocity.z * 0.5 / velocity.length();
-             const frictionEnd = {x: pos.x + frictionDirX, y: pos.y + frictionDirY, z: pos.z + frictionDirZ};
-             this.frictionVector.setAttribute('line', {
-               start: `${pos.x} ${pos.y} ${pos.z}`,
-               end: `${frictionEnd.x} ${frictionEnd.y} ${frictionEnd.z}`
-             });
-             this.frictionArrow.setAttribute('position', frictionEnd);
-             const angle = Math.atan2(frictionDirX, -frictionDirZ) * 180 / Math.PI;
-             this.frictionArrow.setAttribute('rotation', `0 ${angle} 90`);
-             this.frictionLabel.setAttribute('position', `${frictionEnd.x} ${frictionEnd.y + 0.5} ${frictionEnd.z}`);
-           }
-           
-           // Імпульс
-           if (body.velocity.z > 0.1) {
-             const impulseEnd = {x: pos.x, y: pos.y, z: pos.z + 1};
-             this.impulseVector.setAttribute('line', {
-               start: `${pos.x} ${pos.y} ${pos.z}`,
-               end: `${impulseEnd.x} ${impulseEnd.y} ${impulseEnd.z}`
-             });
-             this.impulseArrow.setAttribute('position', impulseEnd);
-             this.impulseArrow.setAttribute('rotation', '90 0 0');
-             this.impulseLabel.setAttribute('position', `${impulseEnd.x} ${impulseEnd.y + 0.5} ${impulseEnd.z}`);
-           }
-         }
-       });
+        // Force vectors component
+        AFRAME.registerComponent('force-vectors', {
+            init: function () {
+                this.cylinder = document.querySelector('#rollingCylinder');
+                this.gravityVector = document.querySelector('#gravityVector');
+                this.gravityArrow = document.querySelector('#gravityArrow');
+                this.gravityLabel = document.querySelector('#gravityLabel');
+                this.normalVector = document.querySelector('#normalVector');
+                this.normalArrow = document.querySelector('#normalArrow');
+                this.normalLabel = document.querySelector('#normalLabel');
+                this.frictionVector = document.querySelector('#frictionVector');
+                this.frictionArrow = document.querySelector('#frictionArrow');
+                this.frictionLabel = document.querySelector('#frictionLabel');
+                this.impulseVector = document.querySelector('#impulseVector');
+                this.impulseArrow = document.querySelector('#impulseArrow');
+                this.impulseLabel = document.querySelector('#impulseLabel');
+                
+                this.cylinder.addEventListener('body-loaded', () => {
+                    this.gravityVector.setAttribute('visible', true);
+                    this.gravityArrow.setAttribute('visible', true);
+                    this.gravityLabel.setAttribute('visible', true);
+                    this.normalVector.setAttribute('visible', true);
+                    this.normalArrow.setAttribute('visible', true);
+                    this.normalLabel.setAttribute('visible', true);
+                    this.frictionVector.setAttribute('visible', true);
+                    this.frictionArrow.setAttribute('visible', true);
+                    this.frictionLabel.setAttribute('visible', true);
+                    this.impulseVector.setAttribute('visible', true);
+                    this.impulseArrow.setAttribute('visible', true);
+                    this.impulseLabel.setAttribute('visible', true);
+                });
+            },
+            
+            tick: function () {
+                if (!this.cylinder.body) return;
+                
+                const pos = this.cylinder.getAttribute('position');
+                const body = this.cylinder.body;
+                const mass = body.mass;
+                const g = 9.82;
+                
+                // Gravity
+                const gravityEnd = {x: pos.x, y: pos.y - mass * g * 0.1, z: pos.z};
+                this.gravityVector.setAttribute('line', {
+                    start: `${pos.x} ${pos.y} ${pos.z}`,
+                    end: `${gravityEnd.x} ${gravityEnd.y} ${gravityEnd.z}`
+                });
+                this.gravityArrow.setAttribute('position', gravityEnd);
+                this.gravityLabel.setAttribute('position', `${gravityEnd.x} ${gravityEnd.y - 0.5} ${gravityEnd.z}`);
+                
+                // Normal force
+                if (pos.y <= 0.5) {
+                    const normalEnd = {x: pos.x, y: pos.y + mass * g * 0.1, z: pos.z};
+                    this.normalVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${normalEnd.x} ${normalEnd.y} ${normalEnd.z}`
+                    });
+                    this.normalArrow.setAttribute('position', normalEnd);
+                    this.normalArrow.setAttribute('rotation', '180 0 0');
+                    this.normalLabel.setAttribute('position', `${normalEnd.x} ${normalEnd.y + 0.5} ${normalEnd.z}`);
+                }
+                
+                // Friction force
+                const velocity = body.velocity;
+                if (velocity.length() > 0.1) {
+                    const frictionDirX = -velocity.x * 0.5 / velocity.length();
+                    const frictionDirY = -velocity.y * 0.5 / velocity.length();
+                    const frictionDirZ = -velocity.z * 0.5 / velocity.length();
+                    const frictionEnd = {x: pos.x + frictionDirX, y: pos.y + frictionDirY, z: pos.z + frictionDirZ};
+                    this.frictionVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${frictionEnd.x} ${frictionEnd.y} ${frictionEnd.z}`
+                    });
+                    this.frictionArrow.setAttribute('position', frictionEnd);
+                    const angle = Math.atan2(frictionDirX, -frictionDirZ) * 180 / Math.PI;
+                    this.frictionArrow.setAttribute('rotation', `0 ${angle} 90`);
+                    this.frictionLabel.setAttribute('position', `${frictionEnd.x} ${frictionEnd.y + 0.5} ${frictionEnd.z}`);
+                }
+                
+                // Impulse
+                if (body.velocity.z > 0.1) {
+                    const impulseEnd = {x: pos.x, y: pos.y, z: pos.z + 1};
+                    this.impulseVector.setAttribute('line', {
+                        start: `${pos.x} ${pos.y} ${pos.z}`,
+                        end: `${impulseEnd.x} ${impulseEnd.y} ${impulseEnd.z}`
+                    });
+                    this.impulseArrow.setAttribute('position', impulseEnd);
+                    this.impulseArrow.setAttribute('rotation', '90 0 0');
+                    this.impulseLabel.setAttribute('position', `${impulseEnd.x} ${impulseEnd.y + 0.5} ${impulseEnd.z}`);
+                }
+            }
+        });
 
-       // Додаємо компонент до циліндра
-       document.addEventListener('DOMContentLoaded', function () {
-         document.querySelector('#rollingCylinder').setAttribute('apply-impulse-on-start', '');
-         document.querySelector('a-scene').setAttribute('force-vectors', '');
-       });
-     </script>
-   </a-scene>
- </body>
+        // Initialize components
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('a-scene').setAttribute('cylinder-controls', '');
+            document.querySelector('a-scene').setAttribute('force-vectors', '');
+        });
+    </script>
+</body>
 </html>
