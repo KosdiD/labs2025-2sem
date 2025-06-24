@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="utf-8">
-    <title>WebXR AR - Фізика кочення (Все в одному)</title>
+    <title>WebXR AR - Фізика кочення (Виправлено)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <script type="importmap">
     {
@@ -48,7 +48,6 @@
         <button id="scale-up-button">+</button>
         <button id="scale-down-button">-</button>
     </div>
-    
     <div id="ar-button-container"></div>
 
     <script type="module">
@@ -57,10 +56,9 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import * as CANNON from 'cannon-es';
 
-        // --- Глобальні змінні ---
         let camera, scene, renderer, world;
         let controls, controller;
-        let sceneGroup;
+        let sceneGroup, reticle;
         const objectsToUpdate = [];
 
         let hitTestSource = null;
@@ -68,14 +66,12 @@
         let isObjectPlaced = false;
         let isPhysicsEnabled = true;
 
-        const RESET_INTERVAL = 10000; // Інтервал авто-оновлення в мілісекундах (10 секунд)
+        const RESET_INTERVAL = 10000;
 
-        // --- Ініціалізація ---
         init();
         animate();
 
         function init() {
-            // --- НАЛАШТУВАННЯ THREE.JS ---
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(1.5, 2, 3);
@@ -95,14 +91,11 @@
             renderer.xr.enabled = true;
             document.body.appendChild(renderer.domElement);
             
-            // --- КЕРУВАННЯ КАМЕРОЮ ---
             controls = new OrbitControls(camera, renderer.domElement);
             controls.target.set(0, 0.5, 0);
 
-            // --- НАЛАШТУВАННЯ ФІЗИКИ (CANNON-ES) ---
             world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
 
-            // --- СТВОРЕННЯ СЦЕНИ ---
             sceneGroup = new THREE.Group();
             scene.add(sceneGroup);
             
@@ -114,11 +107,8 @@
             world.addContactMaterial(contactMaterial);
 
             createSceneObjects(groundMaterial, dynamicMaterial);
-
-            // --- НАЛАШТУВАННЯ WEBXR ---
             setupAR();
 
-            // --- КНОПКИ ---
             document.getElementById('reset-button').addEventListener('click', resetSimulation);
             document.getElementById('pause-button').addEventListener('click', () => isPhysicsEnabled = !isPhysicsEnabled);
             document.getElementById('scale-up-button').addEventListener('click', () => sceneGroup.scale.multiplyScalar(1.2));
@@ -126,14 +116,11 @@
 
             window.addEventListener('resize', onWindowResize);
             
-            // --- АВТОМАТИЧНЕ ОНОВЛЕННЯ ---
             setInterval(resetSimulation, RESET_INTERVAL);
-
             resetSimulation();
         }
 
         function createSceneObjects(groundMaterial, dynamicMaterial) {
-            // 1. Підлога
             const floorMesh = new THREE.Mesh(
                 new THREE.BoxGeometry(4, 0.2, 4),
                 new THREE.MeshStandardMaterial({ color: '#7BC8A4' })
@@ -143,7 +130,6 @@
             const floorBody = new CANNON.Body({ mass: 0, material: groundMaterial, shape: new CANNON.Box(new CANNON.Vec3(2, 0.1, 2)) });
             world.addBody(floorBody);
 
-            // 2. Похила площина
             const inclineAngle = -Math.PI / 6;
             const inclineMesh = new THREE.Mesh(
                 new THREE.BoxGeometry(1.5, 0.2, 3),
@@ -159,7 +145,6 @@
             inclineBody.quaternion.copy(inclineMesh.quaternion);
             world.addBody(inclineBody);
 
-            // 3. Циліндр
             const cylinderRadius = 0.2;
             const cylinderHeight = 0.5;
             const cylinderMesh = new THREE.Mesh(
@@ -172,7 +157,6 @@
             const cylinderBody = new CANNON.Body({ mass: 2, material: dynamicMaterial });
             cylinderBody.addShape(cylinderShape, new CANNON.Vec3(), new CANNON.Quaternion().setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2));
             world.addBody(cylinderBody);
-
             objectsToUpdate.push({ mesh: cylinderMesh, body: cylinderBody });
         }
 
@@ -182,7 +166,7 @@
             });
             document.getElementById('ar-button-container').appendChild(arButton);
             
-            const reticle = new THREE.Mesh(
+            reticle = new THREE.Mesh(
                 new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI / 2),
                 new THREE.MeshBasicMaterial()
             );
@@ -209,7 +193,6 @@
                 sceneGroup.visible = false;
                 document.getElementById('ui-container').style.display = 'none';
             });
-
             renderer.xr.addEventListener('sessionend', () => {
                 isObjectPlaced = false;
                 hitTestSource = null;
@@ -221,28 +204,6 @@
                 document.getElementById('ui-container').style.display = 'flex';
                 resetSimulation();
             });
-
-            const arRenderLoop = (timestamp, frame) => {
-                if (frame && !isObjectPlaced) {
-                    if (!hitTestSourceRequested) {
-                        const session = renderer.xr.getSession();
-                        session.requestReferenceSpace('viewer').then(refSpace => {
-                            session.requestHitTestSource({ space: refSpace }).then(source => { hitTestSource = source; });
-                        });
-                        hitTestSourceRequested = true;
-                    }
-                    if (hitTestSource) {
-                        const hitTestResults = frame.getHitTestResults(hitTestSource);
-                        if (hitTestResults.length) {
-                            reticle.visible = true;
-                            reticle.matrix.fromArray(hitTestResults[0].getPose(renderer.xr.getReferenceSpace()).transform.matrix);
-                        } else {
-                            reticle.visible = false;
-                        }
-                    }
-                }
-            };
-            renderer.xr.addEventListener('frame', arRenderLoop);
         }
 
         function resetSimulation() {
@@ -257,15 +218,38 @@
             cylinderBody.quaternion.copy(orientation);
         }
 
-        const clock = new THREE.Clock();
         function animate() {
             renderer.setAnimationLoop(render);
         }
 
-        function render() {
-            controls.update();
-            const deltaTime = Math.min(clock.getDelta(), 0.1);
+        const clock = new THREE.Clock();
+        function render(timestamp, frame) {
+            // Оновлення камери в 3D-режимі
+            if (!renderer.xr.isPresenting) {
+                controls.update();
+            }
 
+            // ЗМІНЕНО: Вся логіка AR тепер тут, в єдиному циклі
+            if (frame && !isObjectPlaced) {
+                if (!hitTestSourceRequested) {
+                    const session = renderer.xr.getSession();
+                    session.requestReferenceSpace('viewer').then(refSpace => {
+                        session.requestHitTestSource({ space: refSpace }).then(source => { hitTestSource = source; });
+                    });
+                    hitTestSourceRequested = true;
+                }
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestResults.length) {
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hitTestResults[0].getPose(renderer.xr.getReferenceSpace()).transform.matrix);
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+
+            const deltaTime = Math.min(clock.getDelta(), 0.1);
             if (isPhysicsEnabled && (!renderer.xr.isPresenting || isObjectPlaced)) {
                 world.step(1 / 60, deltaTime, 3);
             }
